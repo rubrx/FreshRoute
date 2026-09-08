@@ -102,13 +102,8 @@ export function EstimatorForm({ supportedStates }: Props) {
             onChange={(v) => handleField("distance", v)}
           />
           <label className="flex flex-col gap-1">
-            <span className="flex items-baseline justify-between">
-              <span className="text-sm font-medium text-[color:var(--color-fg)]">
-                Destination state
-              </span>
-              <span className="text-[10px] uppercase tracking-wider text-[color:var(--color-fg-dim)]">
-                Cost model row required
-              </span>
+            <span className="text-sm font-medium text-[color:var(--color-fg)]">
+              Destination state
             </span>
             <select
               value={form.state}
@@ -124,7 +119,7 @@ export function EstimatorForm({ supportedStates }: Props) {
           </label>
           <NumberField
             label="Diesel price"
-            hint="₹/litre (freight scales linearly, ±60 %)"
+            hint="₹/litre"
             value={form.diesel}
             onChange={(v) => handleField("diesel", v)}
             step="0.5"
@@ -147,7 +142,7 @@ export function EstimatorForm({ supportedStates }: Props) {
                 <Loader2 size={16} className="animate-spin" /> Calculating
               </>
             ) : (
-              "Estimate net realisation"
+              "Estimate net"
             )}
           </button>
         </form>
@@ -158,8 +153,7 @@ export function EstimatorForm({ supportedStates }: Props) {
           <ResultView result={result} />
         ) : (
           <Panel className="flex h-full min-h-[420px] items-center justify-center p-8 text-center text-sm text-[color:var(--color-fg-muted)]">
-            Fill the form and press <em>Estimate</em>. The breakdown will appear
-            here.
+            The breakdown will appear here.
           </Panel>
         )}
       </div>
@@ -208,23 +202,22 @@ function ResultView({ result }: { result: CostEstimate }) {
   return (
     <Panel className="p-6">
       <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
-        Estimated net realisation
+        Net revenue
       </div>
       <div className="mt-2 flex items-baseline gap-3">
         <span
-          className="text-4xl font-medium tabular text-[color:var(--color-fg)]"
-          style={{ fontFamily: "var(--font-serif)" }}
+          className="text-4xl tabular text-[color:var(--color-fg)]"
+          style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
         >
           {formatINR(result.net_revenue_rs)}
         </span>
         <span className="text-sm tabular text-[color:var(--color-fg-muted)]">
-          ≈ {formatINR(result.net_rs_per_tonne)} / tonne
+          {formatINR(result.net_rs_per_tonne)} / tonne
         </span>
       </div>
       <p className="mt-2 text-xs text-[color:var(--color-fg-muted)]">
-        On a {result.truck_size_tonnes}-tonne truck to {result.dest_state},
-        {" "}
-        {result.distance_km.toLocaleString("en-IN")} km · diesel ₹{result.diesel_price_rs_per_l}/L.
+        {result.truck_size_tonnes}-t truck to {result.dest_state} ·{" "}
+        {result.distance_km.toLocaleString("en-IN")} km · diesel ₹{result.diesel_price_rs_per_l}/L
       </p>
 
       <div className="mt-8">

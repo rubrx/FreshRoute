@@ -65,36 +65,34 @@ def summary(db: Session = Depends(get_db)) -> SummaryResponse:
 
     cards = [
         SummaryCard(
-            label="Snapshot",
+            label="Latest",
             value=latest.isoformat() if latest else "—",
-            caption="Latest ingested day",
+            caption="Snapshot date",
         ),
         SummaryCard(
-            label="Coverage",
-            value=f"{counts['states']} states  ·  {counts['markets']} mandis",
-            caption=f"{counts['commodities']} commodities tracked",
+            label="States",
+            value=f"{counts['states']}",
+            caption=f"{counts['markets']} mandis",
         ),
         SummaryCard(
-            label="Rows today",
+            label="Prices",
             value=f"{counts['rows_today']:,}",
-            caption="Prices upserted into market_daily",
+            caption="Reported today",
         ),
     ]
     if top_spread:
         cards.append(
             SummaryCard(
-                label="Biggest spread",
+                label="Widest spread",
                 value=f"{top_spread['spread_pct']}%",
                 caption=(
-                    f"{top_spread['commodity']} in {top_spread['state']} — "
-                    f"₹{top_spread['lo']:.0f} → ₹{top_spread['hi']:.0f} across "
-                    f"{top_spread['n']} mandis"
+                    f"{top_spread['commodity']} · {top_spread['state']}"
                 ),
             )
         )
     else:
         cards.append(
-            SummaryCard(label="Biggest spread", value="—", caption="Awaiting data")
+            SummaryCard(label="Widest spread", value="—", caption=None)
         )
 
     return SummaryResponse(snapshot_date=latest, cards=cards)

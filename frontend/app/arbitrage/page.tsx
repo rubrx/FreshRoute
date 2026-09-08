@@ -1,68 +1,61 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-import { Panel, SectionHeader } from "@/app/components/Panel";
+import { Panel } from "@/app/components/Panel";
 import { SpreadBar } from "@/app/components/SpreadBar";
 import { fetchArbitrage, formatINR, formatNumber } from "@/app/lib/api";
 
 type Search = { commodity?: string };
 
+const COMMODITIES = ["Tomato", "Onion", "Potato", "Banana"] as const;
+
 export default async function ArbitragePage({
   searchParams,
 }: PageProps<"/arbitrage">) {
   const { commodity } = (await searchParams) as Search;
-
-  const arb = await fetchArbitrage({
-    commodity,
-    limit: 30,
-    minReporters: 3,
-  });
-
-  const commodities = ["Tomato", "Onion", "Potato", "Banana"];
-  const displayCommodity = commodity ?? "All commodities";
+  const arb = await fetchArbitrage({ commodity, limit: 30, minReporters: 3 });
 
   return (
-    <div className="mx-auto max-w-7xl px-6 pt-12 pb-24">
-      <SectionHeader
-        eyebrow={`Snapshot · ${arb.snapshot_date ?? "—"}`}
-        title="Today’s same-day arbitrage spreads"
-        description="Each row is one (commodity × state) with at least three reporting mandis. The bar shows where the low and the high sit inside the state’s price range; the percentage is high ÷ low − 1."
-      />
-
-      <div className="mb-8 flex flex-wrap items-center gap-2">
-        <FilterChip href="/arbitrage" label="All" active={!commodity} />
-        {commodities.map((c) => (
-          <FilterChip
-            key={c}
-            href={`/arbitrage?commodity=${encodeURIComponent(c)}`}
-            label={c}
-            active={commodity === c}
-          />
-        ))}
+    <div className="mx-auto max-w-6xl px-6 pt-20 pb-24">
+      <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-[color:var(--color-fg-dim)]">
+            {arb.snapshot_date ?? "—"}
+          </div>
+          <h1
+            className="text-4xl leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]"
+            style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
+          >
+            Same-day spreads
+          </h1>
+          <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">
+            The gap between the highest and lowest mandi, within each state, today.
+          </p>
+        </div>
+        <FilterRow active={commodity} />
       </div>
 
       {arb.rows.length === 0 ? (
         <Panel className="p-8 text-center text-[color:var(--color-fg-muted)]">
-          No spreads to show for <span className="italic">{displayCommodity}</span>{" "}
-          yet. Try another commodity or wait for tomorrow&rsquo;s snapshot.
+          Nothing to show for this filter yet.
         </Panel>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {arb.rows.map((row) => (
             <Panel key={`${row.commodity}-${row.state}`} className="p-5">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.2fr_2fr_auto] md:items-center">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.1fr_2fr_auto] md:items-center">
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
+                  <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
                     {row.commodity}
                   </div>
                   <div
-                    className="mt-1 text-lg font-medium text-[color:var(--color-fg)]"
-                    style={{ fontFamily: "var(--font-serif)" }}
+                    className="mt-1 text-lg text-[color:var(--color-fg)]"
+                    style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
                   >
                     {row.state}
                   </div>
-                  <div className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
-                    {row.mandis_reporting} mandis reporting
+                  <div className="mt-0.5 text-xs text-[color:var(--color-fg-muted)]">
+                    {row.mandis_reporting} mandis
                   </div>
                 </div>
 
@@ -73,20 +66,21 @@ export default async function ArbitragePage({
                   highLabel={row.high_market}
                 />
 
-                <div className="flex flex-col items-end justify-between gap-2 md:h-full">
+                <div className="flex flex-col items-end gap-2 text-right md:h-full md:justify-between">
                   <span
-                    className="rounded-full bg-[color:var(--color-accent)]/10 px-3 py-1 text-sm font-semibold tabular text-[color:var(--color-accent)]"
+                    className="tabular text-lg text-[color:var(--color-accent)]"
+                    style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
                   >
                     +{formatNumber(row.spread_pct, 1)}%
                   </span>
                   <span className="text-xs tabular text-[color:var(--color-fg-muted)]">
-                    surplus {formatINR(row.spread_rs_per_quintal)}/qtl
+                    {formatINR(row.spread_rs_per_quintal)} / qtl
                   </span>
                   <Link
                     href={`/mandis?commodity=${encodeURIComponent(row.commodity)}&state=${encodeURIComponent(row.state)}`}
-                    className="inline-flex items-center gap-1 text-xs text-[color:var(--color-fg-muted)] transition-colors hover:text-[color:var(--color-fg)]"
+                    className="inline-flex items-center gap-1 text-[11px] text-[color:var(--color-fg-muted)] transition-colors hover:text-[color:var(--color-fg)]"
                   >
-                    Explore mandis <ArrowUpRight size={12} />
+                    Mandis <ArrowUpRight size={11} />
                   </Link>
                 </div>
               </div>
@@ -98,23 +92,31 @@ export default async function ArbitragePage({
   );
 }
 
-function FilterChip({
-  href,
-  label,
-  active,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-}) {
+function FilterRow({ active }: { active?: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1 text-xs">
+      <Chip href="/arbitrage" label="All" active={!active} />
+      {COMMODITIES.map((c) => (
+        <Chip
+          key={c}
+          href={`/arbitrage?commodity=${encodeURIComponent(c)}`}
+          label={c}
+          active={active === c}
+        />
+      ))}
+    </div>
+  );
+}
+
+function Chip({ href, label, active }: { href: string; label: string; active: boolean }) {
   return (
     <Link
       href={href}
       className={
-        "rounded-full border px-3 py-1.5 text-xs transition-colors " +
+        "rounded-full border px-3 py-1.5 transition-colors " +
         (active
-          ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent)]/10 text-[color:var(--color-accent)]"
-          : "border-[color:var(--color-line)] text-[color:var(--color-fg-muted)] hover:bg-[color:var(--color-bg-elev)]")
+          ? "border-[color:var(--color-fg)] bg-[color:var(--color-fg)] text-[color:var(--color-bg)]"
+          : "border-[color:var(--color-line)] text-[color:var(--color-fg-muted)] hover:bg-[color:var(--color-bg-elev-2)]")
       }
     >
       {label}

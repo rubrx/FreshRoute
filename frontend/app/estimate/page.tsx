@@ -1,10 +1,8 @@
-import { SectionHeader } from "@/app/components/Panel";
 import { EstimatorForm } from "./EstimatorForm";
 import { fetchFacets } from "@/app/lib/api";
 
-// Only these 10 states have entries in data/reference/costs.csv today.
-// The cost model raises KeyError for anything else; the client-side
-// select prevents that gracefully.
+// Only these ten states have entries in data/reference/costs.csv today.
+// Filtering the UI select prevents a KeyError from the cost model.
 const COST_MODEL_STATES = [
   "Maharashtra",
   "Karnataka",
@@ -19,18 +17,23 @@ const COST_MODEL_STATES = [
 ];
 
 export default async function EstimatePage() {
-  // Reuse the facets endpoint so we can intersect: only offer states
-  // that both have live prices AND have a cost row.
   const facets = await fetchFacets();
   const supported = COST_MODEL_STATES.filter((s) => facets.states.includes(s));
 
   return (
-    <div className="mx-auto max-w-5xl px-6 pt-12 pb-24">
-      <SectionHeader
-        eyebrow="Phase 2 · cost model v1"
-        title="What does a truckload actually earn?"
-        description="Enter a destination quote and consignment details; the model returns an itemised ₹ breakdown covering freight (diesel-linked), APMC commission, state cess, entry fee, labour, and weighment. All rates are seeded from data/reference/costs.csv and validated by 13 pytest cases."
-      />
+    <div className="mx-auto max-w-5xl px-6 pt-20 pb-24">
+      <div className="mb-10">
+        <h1
+          className="text-4xl leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]"
+          style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
+        >
+          What does a shipment earn?
+        </h1>
+        <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">
+          Enter a destination quote and consignment details. Net revenue after
+          freight, commission, cess, entry fee, labour, and weighment.
+        </p>
+      </div>
       <EstimatorForm supportedStates={supported} />
     </div>
   );

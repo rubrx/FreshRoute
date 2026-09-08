@@ -1,54 +1,52 @@
 @import "tailwindcss";
 
 /* ─── Design tokens ─────────────────────────────────────────────────
-   Editorial analytical direction — warm dark surface, disciplined
-   type, single terracotta accent (echoes the saffron of the Indian
-   flag without being cliché). All colours OKLCH so tints stay
-   perceptually even across the palette. */
+   Warm paper light theme. All OKLCH so tints stay perceptually even.
+   One accent (deep rust) — used sparingly, only for the value
+   proposition and the primary action. */
 :root {
-  --bg:         oklch(15% 0.012 60);
-  --bg-elev:    oklch(19% 0.014 60);
-  --bg-elev-2:  oklch(23% 0.016 60);
-  --line:       oklch(30% 0.018 60);
-  --line-soft:  oklch(25% 0.014 60);
+  --bg:         oklch(97.8% 0.008 82);
+  --bg-elev:    oklch(99.6% 0.004 82);
+  --bg-elev-2:  oklch(96% 0.012 78);
+  --line:       oklch(88% 0.010 78);
+  --line-soft:  oklch(93% 0.008 82);
 
-  --fg:         oklch(96% 0.015 80);
-  --fg-muted:   oklch(72% 0.020 70);
-  --fg-dim:     oklch(52% 0.020 70);
+  --fg:         oklch(22% 0.020 55);
+  --fg-muted:   oklch(46% 0.022 55);
+  --fg-dim:     oklch(62% 0.018 60);
 
-  --accent:     oklch(72% 0.170 55);
-  --accent-ink: oklch(20% 0.030 55);
-  --success:    oklch(72% 0.150 145);
-  --warn:       oklch(78% 0.170 78);
-  --danger:     oklch(65% 0.220 25);
+  --accent:     oklch(52% 0.190 32);
+  --accent-ink: oklch(99% 0.004 82);
+  --accent-soft:oklch(94% 0.045 40);
+
+  --success:    oklch(52% 0.140 155);
+  --danger:     oklch(52% 0.220 25);
 
   --font-serif: var(--font-fraunces), "Fraunces", ui-serif, Georgia, serif;
   --font-sans:  var(--font-inter),    "Inter",    ui-sans-serif, system-ui, sans-serif;
   --font-mono:  var(--font-jetbrains),"JetBrains Mono", ui-monospace, monospace;
 
-  --radius:      12px;
-  --radius-lg:   18px;
-  --shadow-1:    0 1px 0 0 oklch(100% 0 0 / 0.03) inset,
-                 0 8px 32px -12px oklch(0% 0 0 / 0.6);
+  --shadow-1:    0 1px 2px 0 oklch(20% 0.02 60 / 0.04),
+                 0 8px 24px -12px oklch(20% 0.02 60 / 0.08);
 }
 
 @theme inline {
-  --color-bg:        var(--bg);
-  --color-bg-elev:   var(--bg-elev);
-  --color-bg-elev-2: var(--bg-elev-2);
-  --color-line:      var(--line);
-  --color-line-soft: var(--line-soft);
-  --color-fg:        var(--fg);
-  --color-fg-muted:  var(--fg-muted);
-  --color-fg-dim:    var(--fg-dim);
-  --color-accent:    var(--accent);
-  --color-accent-ink:var(--accent-ink);
-  --color-success:   var(--success);
-  --color-warn:      var(--warn);
-  --color-danger:    var(--danger);
-  --font-serif:      var(--font-serif);
-  --font-sans:       var(--font-sans);
-  --font-mono:       var(--font-mono);
+  --color-bg:         var(--bg);
+  --color-bg-elev:    var(--bg-elev);
+  --color-bg-elev-2:  var(--bg-elev-2);
+  --color-line:       var(--line);
+  --color-line-soft:  var(--line-soft);
+  --color-fg:         var(--fg);
+  --color-fg-muted:   var(--fg-muted);
+  --color-fg-dim:     var(--fg-dim);
+  --color-accent:     var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft:var(--accent-soft);
+  --color-success:    var(--success);
+  --color-danger:     var(--danger);
+  --font-serif:       var(--font-serif);
+  --font-sans:        var(--font-sans);
+  --font-mono:        var(--font-mono);
 }
 
 html, body {
@@ -61,17 +59,6 @@ html, body {
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
-
-.grain { position: relative; isolation: isolate; }
-.grain::after {
-  content: "";
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background-image: radial-gradient(oklch(100% 0 0 / 0.015) 1px, transparent 1px);
-  background-size: 3px 3px;
-  mix-blend-mode: overlay;
-  z-index: 0;
-}
 
 :where(a, button, input, select, textarea, [role="button"]):focus-visible {
   outline: 2px solid var(--accent);
