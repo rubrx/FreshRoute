@@ -181,5 +181,23 @@ def distances(
     typer.echo(f"Matrix has {len(df)} pairs cached")
 
 
+@app.command()
+def serve(
+    host: str = typer.Option("127.0.0.1", help="Bind host"),
+    port: int = typer.Option(8000, help="Bind port"),
+    reload: bool = typer.Option(False, help="uvicorn --reload for local dev"),
+) -> None:
+    """Run the FastAPI demo API (powers the dashboard)."""
+    import uvicorn
+
+    uvicorn.run(
+        "backend.api.main:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
+
+
 if __name__ == "__main__":
     app()

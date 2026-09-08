@@ -27,6 +27,10 @@ dependencies = [
     "python-dotenv>=1.0",
     "typer>=0.12",
     "structlog>=24.1",
+
+    # API (Phase 5 read-only scaffolding — powers the demo dashboard)
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
 ]
 
 [project.optional-dependencies]

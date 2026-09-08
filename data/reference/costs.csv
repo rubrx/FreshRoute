@@ -1,11 +1,11 @@
 state,apmc_commission_pct,cess_pct,entry_fee_rs_per_tonne,labour_rs_per_tonne,weighment_rs_per_tonne,notes
-Maharashtra,6.0,1.0,50,150,25,APMC Act 1963. 6% commission historically applied on fruits and vegetables; some deregulation under 2016 amendments but market fee still levied at most APMCs. Validate with Tanishq — Pune, Nashik, Vashi.
-Karnataka,2.0,1.5,25,120,20,Karnataka APMC Act 1966. Lower commission; higher levies vary by APMC. Bangalore Yeshwanthpur, Kolar are references.
-Uttar Pradesh,2.5,1.0,40,140,25,UP APMC (Krishi Utpadan Mandi Adhiniyam) 1964. Rates vary widely by mandi; Ghaziabad and Lucknow differ from Varanasi.
-Punjab,2.5,3.0,50,130,25,Punjab APMC Act 1961. Additional rural development cess. Ludhiana reference.
-Haryana,2.0,2.0,40,140,25,Haryana APMC Act 1961. Includes market development fee.
-Delhi,6.0,1.0,60,180,30,Azadpur mandi — highest volumes in India for fruits/vegetables. Commission is the reference number for fruit trade.
-Gujarat,2.0,1.0,35,130,25,Gujarat APMC Act 1963. Somewhat lower on paper; verify per-APMC.
-West Bengal,2.5,1.0,30,120,20,West Bengal APMC Act 1972.
-Andhra Pradesh,2.0,1.0,35,130,25,AP AMC Act.
-Tamil Nadu,1.0,1.0,25,120,20,TN Regulation of Markets Act; lower commission structure.
+Maharashtra,6.0,1.0,50,150,25,"APMC Act 1963. 6% commission historically applied on fruits and vegetables; some deregulation under 2016 amendments but market fee still levied at most APMCs. Validate with Tanishq — Pune, Nashik, Vashi."
+Karnataka,2.0,1.5,25,120,20,"Karnataka APMC Act 1966. Lower commission; higher levies vary by APMC. Bangalore Yeshwanthpur, Kolar are references."
+Uttar Pradesh,2.5,1.0,40,140,25,"UP APMC (Krishi Utpadan Mandi Adhiniyam) 1964. Rates vary widely by mandi; Ghaziabad and Lucknow differ from Varanasi."
+Punjab,2.5,3.0,50,130,25,"Punjab APMC Act 1961. Additional rural development cess. Ludhiana reference."
+Haryana,2.0,2.0,40,140,25,"Haryana APMC Act 1961. Includes market development fee."
+Delhi,6.0,1.0,60,180,30,"Azadpur mandi — highest volumes in India for fruits/vegetables. Commission is the reference number for fruit trade."
+Gujarat,2.0,1.0,35,130,25,"Gujarat APMC Act 1963. Somewhat lower on paper; verify per-APMC."
+West Bengal,2.5,1.0,30,120,20,"West Bengal APMC Act 1972."
+Andhra Pradesh,2.0,1.0,35,130,25,"AP AMC Act."
+Tamil Nadu,1.0,1.0,25,120,20,"TN Regulation of Markets Act; lower commission structure."
