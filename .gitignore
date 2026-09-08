@@ -46,3 +46,11 @@ data/osrm/
 # Logs
 *.log
 logs/
+
+# Project docs — local/private
+docs/
+
+# Local/project notes
+practicum-report.md
+PROGRESS.md
+TODO.md
