@@ -1,0 +1,17 @@
+commodity,t_opt_c,rh_opt_pct,sl_opt_days,q10,chilling_injury_floor_c,ethylene_sensitive,ethylene_producer,category,notes
+Tomato,12.5,92.5,14,2.5,10.0,true,true,vegetable,Mature-green. Chilling injury below ~10C causes pitting and off-flavour. Ripe fruit tolerates 8-10C for shorter periods.
+Onion,0.0,67.5,180,2.0,,false,false,vegetable,Dry cured bulbs. Requires low RH to prevent sprouting and rot. Never refrigerate humidified.
+Potato,7.5,96.5,180,2.0,,false,false,vegetable,Table stock. Below 4C accumulates sugars (sweetening). Above 10C sprouts.
+Banana,13.5,92.5,21,3.0,13.0,true,true,fruit,Green fruit. Below 13C chilling injury (peel blackening). Highly ethylene-sensitive.
+Mango,13.0,90.0,18,2.5,10.0,true,true,fruit,Mature-green Alphonso/Kesar range. Cultivar-specific chilling thresholds.
+Apple,0.0,92.5,120,2.5,,true,true,fruit,Delicious/Kashmiri range. CA storage extends further; assume ambient here.
+Cauliflower,0.0,97.5,25,2.5,,true,false,vegetable,Trimmed heads. High RH essential.
+Cabbage,0.0,99.0,42,2.5,,true,false,vegetable,Fresh mature heads. Very tolerant of near-zero storage.
+Brinjal,11.0,92.5,10,2.5,10.0,true,false,vegetable,Chilling injury below 10C causes pitting.
+Okra,8.5,92.5,8,3.0,7.0,true,false,vegetable,Very short shelf life. Chilling injury below 7C.
+Cucumber,11.0,95.0,12,3.0,10.0,true,false,vegetable,Chilling injury below 10C causes pitting and decay.
+Carrot,0.0,97.5,90,2.5,,true,false,vegetable,Topped mature roots. High RH prevents flaccidity.
+Ginger,13.0,65.0,150,2.0,12.0,false,false,vegetable,Cured rhizomes. Below 12C chilling injury.
+Garlic,0.0,67.5,180,2.0,,false,false,vegetable,Cured bulbs. Low RH to prevent sprouting.
+Green Chilli,7.5,92.5,14,3.0,7.0,true,false,vegetable,Chilling injury below 7C. High respiration rate.
+Grapes,-0.5,92.5,42,2.5,,false,false,fruit,Table grapes. SO2 fumigation extends further; assume none here.

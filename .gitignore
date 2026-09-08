@@ -1,0 +1,48 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Data — everything except reference tables (which are versioned)
+data/raw/**
+data/processed/**
+data/models/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/models/.gitkeep
+
+# Ingestion state
+**/state.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Docker volumes (should be named — never bind-mount into repo)
+postgres_data/
+
+# OSRM preprocessed artifacts (bind-mounted so they can be rebuilt on host)
+data/osrm/
+
+# Logs
+*.log
+logs/

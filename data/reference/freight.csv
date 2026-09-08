@@ -1,0 +1,6 @@
+truck_size_tonnes,rs_per_km_base,diesel_price_reference_rs_per_l,fixed_loading_rs,notes
+3,28.0,90.0,800,Chota Hathi / Tata Ace. Short-haul intra-state.
+7,42.0,90.0,1500,Eicher 14-ft. Medium haul.
+10,55.0,90.0,2000,Standard 20-ft container truck. Most common inter-state.
+16,80.0,90.0,3000,32-ft container / multi-axle. Long-haul; requires full truck load.
+25,110.0,90.0,4000,Multi-axle high-tonnage. Long-haul, bulk commodities.

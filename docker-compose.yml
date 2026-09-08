@@ -1,0 +1,68 @@
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: freshroute_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-freshroute}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-freshroute}
+      POSTGRES_DB: ${POSTGRES_DB:-freshroute}
+    ports:
+      # 5433 on host to avoid clashing with a local Postgres install.
+      - "5433:5432"
+    volumes:
+      - freshroute_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-freshroute} -d ${POSTGRES_DB:-freshroute}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── OSRM (Phase 2) ─────────────────────────────────────────────────────
+  # OSRM needs the India OSM extract to be preprocessed once before it can
+  # serve routes. Run `scripts/osrm_bootstrap.sh` to do the download + extract
+  # + partition + customize steps. Preprocessed artifacts live in the
+  # `osrm_data` bind mount under `./data/osrm/`.
+  #
+  # Both OSRM services are behind the `osrm` compose profile so they don't
+  # start by default. Bring them up explicitly:
+  #     docker compose --profile osrm up -d osrm
+  # osrm-preprocess is a one-shot helper (--profile osrm-bootstrap) invoked
+  # by the bootstrap script; you rarely start it by hand.
+
+  osrm-preprocess:
+    image: osrm/osrm-backend:latest
+    container_name: freshroute_osrm_preprocess
+    profiles: ["osrm-bootstrap"]
+    volumes:
+      - ./data/osrm:/data
+    # Overridden by scripts/osrm_bootstrap.sh with the concrete steps
+    # (osrm-extract → osrm-partition → osrm-customize).
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["echo 'Use scripts/osrm_bootstrap.sh to run preprocessing steps.'"]
+
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: freshroute_osrm
+    profiles: ["osrm"]
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data/osrm:/data:ro
+    # MLD algorithm (matches the customize step in osrm_bootstrap.sh).
+    command: [
+      "osrm-routed",
+      "--algorithm", "mld",
+      "--max-table-size", "5000",
+      "/data/india-latest.osrm"
+    ]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/route/v1/driving/77.5946,12.9716;77.6412,12.9611"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  freshroute_db:
