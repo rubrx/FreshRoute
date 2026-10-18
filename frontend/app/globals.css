@@ -1,49 +1,46 @@
 @import "tailwindcss";
 
 /* ─── Design tokens ──────────────────────────────────────────────
-   FreshRoute — Forest Green theme.
-   Inspired by GreenBasket / GreenNest agri-commerce style.
-   Deep forest green primary, warm cream backgrounds, clean whites. */
+   FreshRoute — clean white + #4CAF50 green.
+   Inter-only typography (no serif). Neutral gray text.
+   Green used sparingly: CTAs, active states, positive signals. */
 :root {
-  /* Backgrounds — very light warm cream, almost white */
-  --bg:         oklch(98.5% 0.004 120);
-  --bg-elev:    oklch(100%  0    0);
-  --bg-elev-2:  oklch(96%   0.014 148);
+  /* White-based backgrounds */
+  --bg:         oklch(99.5% 0.002 145);
+  --bg-elev:    oklch(100%  0     0);
+  --bg-elev-2:  oklch(97%   0.010 145);
 
-  /* Borders */
-  --line:       oklch(86%   0.016 148);
-  --line-soft:  oklch(92%   0.010 148);
+  /* Neutral gray borders */
+  --line:       oklch(87%   0.006 270);
+  --line-soft:  oklch(92%   0.004 270);
 
-  /* Text — dark green-black spectrum */
-  --fg:         oklch(18%   0.030 148);
-  --fg-muted:   oklch(40%   0.032 148);
-  --fg-dim:     oklch(60%   0.022 148);
+  /* Near-black text — no green tint */
+  --fg:         oklch(14%   0.008 270);
+  --fg-muted:   oklch(42%   0.010 270);
+  --fg-dim:     oklch(62%   0.006 270);
 
-  /* PRIMARY — Deep forest green (replaces rust red) */
-  --accent:      oklch(38%   0.148 148);
-  --accent-mid:  oklch(50%   0.158 148);
-  --accent-ink:  oklch(99%   0.005 148);
-  --accent-soft: oklch(93.5% 0.052 148);
+  /* PRIMARY — #4CAF50 (Material Green 500) */
+  --accent:      oklch(64%  0.190 145);
+  --accent-mid:  oklch(56%  0.188 145);
+  --accent-ink:  oklch(99%  0.004 145);
+  --accent-soft: oklch(95%  0.058 145);
 
-  /* Semantic states */
-  --success:      oklch(48%   0.148 148);
-  --warning:      oklch(62%   0.152 75);
-  --danger:       oklch(50%   0.222 25);
+  /* Semantic */
+  --success:      oklch(64%  0.190 145);
+  --warning:      oklch(65%  0.155 75);
+  --danger:       oklch(52%  0.220 25);
 
-  --success-soft: oklch(93.5% 0.052 148);
-  --warning-soft: oklch(95%   0.042 78);
-  --danger-soft:  oklch(95%   0.042 22);
+  --success-soft: oklch(95%  0.058 145);
+  --warning-soft: oklch(95%  0.042 78);
+  --danger-soft:  oklch(95%  0.042 22);
 
-  /* Typography */
-  --font-serif: var(--font-fraunces), "Fraunces", ui-serif, Georgia, serif;
-  --font-sans:  var(--font-inter),    "Inter",    ui-sans-serif, system-ui, sans-serif;
-  --font-mono:  var(--font-jetbrains),"JetBrains Mono", ui-monospace, monospace;
+  /* Inter only — Fraunces removed */
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
 
-  /* Shadows — green-tinted */
-  --shadow-1: 0 1px 3px 0 oklch(18% 0.03 148 / 0.06),
-              0 8px 24px -8px oklch(18% 0.03 148 / 0.12);
-  --shadow-2: 0 4px 16px 0 oklch(18% 0.03 148 / 0.10),
-              0 24px 48px -12px oklch(18% 0.03 148 / 0.18);
+  /* Neutral shadows */
+  --shadow-1: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 8px 24px -8px rgb(0 0 0 / 0.10);
+  --shadow-2: 0 4px 16px 0 rgb(0 0 0 / 0.08), 0 24px 48px -12px rgb(0 0 0 / 0.14);
 }
 
 @theme inline {
@@ -65,7 +62,6 @@
   --color-success-soft: var(--success-soft);
   --color-warning-soft: var(--warning-soft);
   --color-danger-soft:  var(--danger-soft);
-  --font-serif:         var(--font-serif);
   --font-sans:          var(--font-sans);
   --font-mono:          var(--font-mono);
 }
