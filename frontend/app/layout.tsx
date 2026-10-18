@@ -69,7 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="rounded-lg px-3.5 py-2 text-sm font-medium text-[color:var(--color-fg-muted)] transition-colors hover:bg-[color:var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
+                    className="rounded-lg px-4 py-2 text-[15px] font-medium text-[color:var(--color-fg-muted)] transition-colors hover:bg-[color:var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
                   >
                     {item.label}
                   </Link>

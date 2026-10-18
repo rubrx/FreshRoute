@@ -21,34 +21,32 @@ export default async function Home() {
     <div>
 
       {/* ── Hero ──────────────────────────────────────────────────── */}
-      <section className="bg-[color:var(--color-bg)] pt-14 pb-20 md:pt-20 md:pb-28">
+      <section className="bg-[color:var(--color-bg)] pt-6 pb-16 md:pt-10 md:pb-24">
         <div className="mx-auto max-w-6xl px-5 md:px-8">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-20">
 
             {/* Left: headline + CTAs */}
             <div>
-              {/* Script tagline — GreenBasket "Farm Fresh" equivalent */}
-              <div className="mb-4 flex items-center gap-2">
+              <div className="mb-3 flex items-center gap-2">
                 <Leaf
-                  size={16}
+                  size={15}
                   className="text-[color:var(--color-accent)]"
                   aria-hidden="true"
                 />
-                <span className="text-[color:var(--color-accent)] text-sm font-medium leading-none">
+                <span className="text-[color:var(--color-accent)] text-sm font-medium leading-none tracking-wide">
                   Kisan Ka Saathi
                 </span>
               </div>
 
-              {/* Main headline — large, bold, GreenBasket-sized */}
               <h1
-                className="text-[2.8rem] leading-[1.05] tracking-tight font-bold text-[color:var(--color-fg)] md:text-[3.5rem] lg:text-[4rem]"
+                className="text-[3rem] leading-[1.05] tracking-tight font-bold text-[color:var(--color-fg)] md:text-[3.75rem] lg:text-[4.25rem]"
               >
                 Apni Fasal Ka{" "}
                 <span className="text-[color:var(--color-accent)]">Best Mandi</span>{" "}
                 Yahan Milega.
               </h1>
 
-              <p className="mt-5 max-w-md text-lg leading-8 text-[color:var(--color-fg-muted)]">
+              <p className="mt-5 max-w-md text-xl leading-relaxed text-[color:var(--color-fg-muted)]">
                 We rank every nearby mandi by what you actually pocket, after
                 freight, spoilage, and all fees. No guesswork.
               </p>
@@ -57,7 +55,7 @@ export default async function Home() {
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
                   href="/recommend"
-                  className="inline-flex items-center gap-2 rounded-full bg-[color:var(--color-accent)] px-6 py-3.5 text-base font-semibold text-[color:var(--color-accent-ink)] shadow-[var(--shadow-1)] transition-all hover:bg-[color:var(--color-accent-mid)] hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 rounded-full bg-[color:var(--color-accent)] px-7 py-4 text-base font-semibold text-[color:var(--color-accent-ink)] shadow-[var(--shadow-1)] transition-all hover:bg-[color:var(--color-accent-mid)] hover:-translate-y-0.5"
                 >
                   <MapPin size={17} aria-hidden="true" />
                   Find Best Mandi
@@ -65,13 +63,13 @@ export default async function Home() {
                 </Link>
                 <Link
                   href="/arbitrage"
-                  className="inline-flex items-center gap-2 rounded-full border-2 border-[color:var(--color-accent)] px-6 py-3 text-base font-semibold text-[color:var(--color-accent)] transition-colors hover:bg-[color:var(--color-accent-soft)]"
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-[color:var(--color-accent)] px-7 py-[14px] text-base font-semibold text-[color:var(--color-accent)] transition-colors hover:bg-[color:var(--color-accent-soft)]"
                 >
                   Today&rsquo;s Spreads
                 </Link>
               </div>
 
-              {/* Trust badges — GreenBasket "100% Organic · Fast Delivery" */}
+              {/* Trust badges */}
               <div className="mt-8 flex flex-wrap items-center gap-5">
                 {[
                   "27 States covered",
