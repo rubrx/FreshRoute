@@ -4,13 +4,13 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 
 // Tokens duplicated as literals — Recharts sets SVG attributes at render
 // and cannot read CSS custom properties.
-const GRID  = "oklch(90% 0.010 78)";
-const AXIS  = "oklch(88% 0.012 75)";
-const TICK  = "oklch(46% 0.022 55)";
-const BAR   = "oklch(52% 0.190 32)";
-const HOVER = "oklch(96% 0.012 78 / 0.6)";
-const PANEL = "oklch(99% 0.004 82)";
-const INK   = "oklch(22% 0.020 55)";
+const GRID  = "oklch(90% 0.003 270)";
+const AXIS  = "oklch(86% 0.004 270)";
+const TICK  = "oklch(45% 0.006 270)";
+const BAR   = "oklch(55% 0.120 142)";
+const HOVER = "oklch(95% 0.003 270 / 0.6)";
+const PANEL = "oklch(99% 0.002 270)";
+const INK   = "oklch(18% 0.006 270)";
 
 type Row = { market: string; district: string; modal_price: number };
 

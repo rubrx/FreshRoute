@@ -149,8 +149,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Stats bar — dark green, GreenBasket footer strip style ── */}
-      <section className="bg-[color:var(--color-accent)] py-10">
+      {/* ── Stats bar ─────────────────────────────────────────────── */}
+      <section className="bg-[oklch(28%_0.065_142)] py-10">
         <div className="mx-auto max-w-6xl px-5">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {summary.cards.map((c) => (
