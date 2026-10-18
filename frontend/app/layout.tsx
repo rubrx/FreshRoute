@@ -98,7 +98,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </main>
 
         {/* ── Footer ───────────────────────────────────────── */}
-        <footer className="bg-[oklch(20%_0.006_270)] px-6 py-10">
+        <footer className="bg-[oklch(18%_0.010_250)] px-6 py-10">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
 

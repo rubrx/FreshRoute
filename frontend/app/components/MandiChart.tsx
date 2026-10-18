@@ -7,7 +7,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 const GRID  = "oklch(90% 0.003 270)";
 const AXIS  = "oklch(86% 0.004 270)";
 const TICK  = "oklch(45% 0.006 270)";
-const BAR   = "oklch(55% 0.120 142)";
+const BAR   = "oklch(59% 0.149 163)";
 const HOVER = "oklch(95% 0.003 270 / 0.6)";
 const PANEL = "oklch(99% 0.002 270)";
 const INK   = "oklch(18% 0.006 270)";

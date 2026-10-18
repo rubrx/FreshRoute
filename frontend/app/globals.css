@@ -1,37 +1,37 @@
 @import "tailwindcss";
 
 /* ─── Design tokens ──────────────────────────────────────────────
-   FreshRoute — white base + #3B883E green.
-   Inter + Noto Sans Devanagari. Tabular figures for all numbers. */
+   FreshRoute — Slate base + Emerald 600 (#059669) primary.
+   Success: green-600  Warning: amber-600  Danger: red-600        */
 :root {
-  /* White-based backgrounds */
-  --bg:         oklch(99.5% 0.002 145);
+  /* Backgrounds — slate-50 / white / slate-100 */
+  --bg:         oklch(98.5% 0.003 240);
   --bg-elev:    oklch(100%  0     0);
-  --bg-elev-2:  oklch(97%   0.008 145);
+  --bg-elev-2:  oklch(95%   0.006 250);
 
-  /* Neutral gray borders */
-  --line:       oklch(87%   0.006 270);
-  --line-soft:  oklch(92%   0.004 270);
+  /* Borders — slate-100 / slate-200 */
+  --line:       oklch(90%   0.008 250);
+  --line-soft:  oklch(95%   0.006 250);
 
-  /* Near-black text */
-  --fg:         oklch(14%   0.008 270);
-  --fg-muted:   oklch(42%   0.010 270);
-  --fg-dim:     oklch(62%   0.006 270);
+  /* Text — slate-900 / slate-600 / slate-400 */
+  --fg:         oklch(16%   0.020 250);
+  --fg-muted:   oklch(46%   0.026 250);
+  --fg-dim:     oklch(68%   0.018 250);
 
-  /* PRIMARY — #3B883E */
-  --accent:      oklch(53%  0.152 142);
-  --accent-mid:  oklch(46%  0.148 142);
-  --accent-ink:  oklch(99%  0.003 142);
-  --accent-soft: oklch(95%  0.040 142);
+  /* PRIMARY — #059669  Emerald 600 */
+  --accent:      oklch(59%  0.149 163);
+  --accent-mid:  oklch(52%  0.142 163);
+  --accent-ink:  oklch(99%  0.004 163);
+  --accent-soft: oklch(97%  0.040 163);
 
-  /* Semantic */
-  --success:      oklch(53%  0.152 142);
-  --warning:      oklch(65%  0.155 75);
-  --danger:       oklch(52%  0.220 25);
+  /* Semantic — green-600 / amber-600 / red-600 */
+  --success:      oklch(61%  0.155 150);
+  --warning:      oklch(74%  0.162 73);
+  --danger:       oklch(53%  0.220 25);
 
-  --success-soft: oklch(95%  0.040 142);
-  --warning-soft: oklch(95%  0.042 78);
-  --danger-soft:  oklch(95%  0.042 22);
+  --success-soft: oklch(97%  0.040 150);
+  --warning-soft: oklch(97%  0.042 73);
+  --danger-soft:  oklch(97%  0.042 25);
 
   /* Inter primary · Noto Sans Devanagari for Hindi fallback */
   --font-sans: var(--font-inter), "Inter", var(--font-noto-devanagari),
@@ -75,7 +75,6 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Tabular figures — use on any price or number */
 .tabular { font-variant-numeric: tabular-nums; }
 
 :where(a, button, input, select, textarea, [role="button"]):focus-visible {

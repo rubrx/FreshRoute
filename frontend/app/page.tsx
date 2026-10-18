@@ -150,7 +150,7 @@ export default async function Home() {
       </section>
 
       {/* ── Stats bar ─────────────────────────────────────────────── */}
-      <section className="bg-[oklch(28%_0.065_142)] py-10">
+      <section className="bg-[oklch(26%_0.075_163)] py-10">
         <div className="mx-auto max-w-6xl px-5">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {summary.cards.map((c) => (
