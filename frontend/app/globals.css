@@ -1,52 +1,73 @@
 @import "tailwindcss";
 
-/* ─── Design tokens ─────────────────────────────────────────────────
-   Warm paper light theme. All OKLCH so tints stay perceptually even.
-   One accent (deep rust) — used sparingly, only for the value
-   proposition and the primary action. */
+/* ─── Design tokens ──────────────────────────────────────────────
+   FreshRoute — Forest Green theme.
+   Inspired by GreenBasket / GreenNest agri-commerce style.
+   Deep forest green primary, warm cream backgrounds, clean whites. */
 :root {
-  --bg:         oklch(97.8% 0.008 82);
-  --bg-elev:    oklch(99.6% 0.004 82);
-  --bg-elev-2:  oklch(96% 0.012 78);
-  --line:       oklch(88% 0.010 78);
-  --line-soft:  oklch(93% 0.008 82);
+  /* Backgrounds — very light warm cream, almost white */
+  --bg:         oklch(98.5% 0.004 120);
+  --bg-elev:    oklch(100%  0    0);
+  --bg-elev-2:  oklch(96%   0.014 148);
 
-  --fg:         oklch(22% 0.020 55);
-  --fg-muted:   oklch(46% 0.022 55);
-  --fg-dim:     oklch(62% 0.018 60);
+  /* Borders */
+  --line:       oklch(86%   0.016 148);
+  --line-soft:  oklch(92%   0.010 148);
 
-  --accent:     oklch(52% 0.190 32);
-  --accent-ink: oklch(99% 0.004 82);
-  --accent-soft:oklch(94% 0.045 40);
+  /* Text — dark green-black spectrum */
+  --fg:         oklch(18%   0.030 148);
+  --fg-muted:   oklch(40%   0.032 148);
+  --fg-dim:     oklch(60%   0.022 148);
 
-  --success:    oklch(52% 0.140 155);
-  --danger:     oklch(52% 0.220 25);
+  /* PRIMARY — Deep forest green (replaces rust red) */
+  --accent:      oklch(38%   0.148 148);
+  --accent-mid:  oklch(50%   0.158 148);
+  --accent-ink:  oklch(99%   0.005 148);
+  --accent-soft: oklch(93.5% 0.052 148);
 
+  /* Semantic states */
+  --success:      oklch(48%   0.148 148);
+  --warning:      oklch(62%   0.152 75);
+  --danger:       oklch(50%   0.222 25);
+
+  --success-soft: oklch(93.5% 0.052 148);
+  --warning-soft: oklch(95%   0.042 78);
+  --danger-soft:  oklch(95%   0.042 22);
+
+  /* Typography */
   --font-serif: var(--font-fraunces), "Fraunces", ui-serif, Georgia, serif;
   --font-sans:  var(--font-inter),    "Inter",    ui-sans-serif, system-ui, sans-serif;
   --font-mono:  var(--font-jetbrains),"JetBrains Mono", ui-monospace, monospace;
 
-  --shadow-1:    0 1px 2px 0 oklch(20% 0.02 60 / 0.04),
-                 0 8px 24px -12px oklch(20% 0.02 60 / 0.08);
+  /* Shadows — green-tinted */
+  --shadow-1: 0 1px 3px 0 oklch(18% 0.03 148 / 0.06),
+              0 8px 24px -8px oklch(18% 0.03 148 / 0.12);
+  --shadow-2: 0 4px 16px 0 oklch(18% 0.03 148 / 0.10),
+              0 24px 48px -12px oklch(18% 0.03 148 / 0.18);
 }
 
 @theme inline {
-  --color-bg:         var(--bg);
-  --color-bg-elev:    var(--bg-elev);
-  --color-bg-elev-2:  var(--bg-elev-2);
-  --color-line:       var(--line);
-  --color-line-soft:  var(--line-soft);
-  --color-fg:         var(--fg);
-  --color-fg-muted:   var(--fg-muted);
-  --color-fg-dim:     var(--fg-dim);
-  --color-accent:     var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft:var(--accent-soft);
-  --color-success:    var(--success);
-  --color-danger:     var(--danger);
-  --font-serif:       var(--font-serif);
-  --font-sans:        var(--font-sans);
-  --font-mono:        var(--font-mono);
+  --color-bg:           var(--bg);
+  --color-bg-elev:      var(--bg-elev);
+  --color-bg-elev-2:    var(--bg-elev-2);
+  --color-line:         var(--line);
+  --color-line-soft:    var(--line-soft);
+  --color-fg:           var(--fg);
+  --color-fg-muted:     var(--fg-muted);
+  --color-fg-dim:       var(--fg-dim);
+  --color-accent:       var(--accent);
+  --color-accent-mid:   var(--accent-mid);
+  --color-accent-ink:   var(--accent-ink);
+  --color-accent-soft:  var(--accent-soft);
+  --color-success:      var(--success);
+  --color-warning:      var(--warning);
+  --color-danger:       var(--danger);
+  --color-success-soft: var(--success-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft:  var(--danger-soft);
+  --font-serif:         var(--font-serif);
+  --font-sans:          var(--font-sans);
+  --font-mono:          var(--font-mono);
 }
 
 html, body {
@@ -64,4 +85,11 @@ html, body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

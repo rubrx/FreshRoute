@@ -17,6 +17,7 @@ Spoilage-aware mandi routing and price intelligence for Indian agri traders. Cap
 
 Phase 1 (data foundation) and Phase 2 (cost + freshness reference data + OSRM + geocoding scaffolding) — see [`PROGRESS.md`](./PROGRESS.md).
 
+
 ## What's next
 
 Phase 3 (forecasting) — see [`TODO.md`](./TODO.md). Blocked on running the actual historical backfill and passing **Gate 1** (panel density ≥ 60% per mandi).

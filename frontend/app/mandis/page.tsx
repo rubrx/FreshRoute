@@ -127,7 +127,39 @@ export default async function MandisPage({
             />
           </Panel>
 
-          <Panel className="mt-6 overflow-hidden">
+          {/* Mobile card list */}
+          <div className="mt-6 space-y-2 md:hidden">
+            <div className="mb-3 text-xs text-[color:var(--color-fg-dim)]">
+              All {prices.count} mandis
+            </div>
+            {prices.rows.map((r) => (
+              <div
+                key={r.market_id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-[color:var(--color-line-soft)] bg-[color:var(--color-bg-elev)] px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-[color:var(--color-fg)]">
+                    {r.market}
+                  </div>
+                  <div className="mt-0.5 text-xs text-[color:var(--color-fg-dim)]">
+                    {r.district} · {r.state}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div
+                    className="tabular text-base font-medium text-[color:var(--color-fg)]"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
+                    {formatINR(r.modal_price_rs_per_quintal)}
+                  </div>
+                  <div className="text-[10px] text-[color:var(--color-fg-dim)]">₹/qtl modal</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <Panel className="mt-6 hidden overflow-hidden md:block">
             <div className="border-b border-[color:var(--color-line-soft)] px-5 py-4 text-sm text-[color:var(--color-fg)]">
               All {prices.count} mandis
             </div>

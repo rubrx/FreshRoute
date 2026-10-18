@@ -141,6 +141,98 @@ export function fetchCostEstimate(params: {
   return get<CostEstimate>(`/cost/estimate?${qs}`);
 }
 
+// ── Phase 5: Recommendation types ────────────────────────────────────────────
+
+export type RecommendSpoilage = {
+  ambient_c: number;
+  effective_c: number;
+  sl_opt_days: number;
+  sl_at_effective_days: number;
+  spoilage_fraction: number;
+  feasible: boolean;
+  reason: string;
+};
+
+export type RecommendCostBreakdown = {
+  fuel_litres: number;
+  fuel_rs: number;
+  other_freight_rs: number;
+  apmc_commission_rs: number;
+  cess_rs: number;
+  entry_fee_rs: number;
+  labour_rs: number;
+  weighment_rs: number;
+  total_deductions_rs: number;
+};
+
+export type RecommendItem = {
+  rank: number;
+  market_id: number;
+  market_name: string;
+  district: string;
+  state: string;
+  distance_km: number;
+  distance_source: string;
+  transit_hours: number;
+  trips: number;
+  modal_price_rs_per_quintal: number;
+  gross_revenue_rs: number;
+  expected_saleable_revenue_rs: number;
+  net_revenue_rs: number;
+  net_rs_per_tonne: number;
+  price_status: string;
+  price_snapshot_date: string;
+  why: string;
+  costs: RecommendCostBreakdown;
+  spoilage: RecommendSpoilage;
+};
+
+export type RecommendInfeasible = {
+  market_name: string;
+  district: string;
+  state: string;
+  distance_km: number;
+  reason: string;
+};
+
+export type RecommendResponse = {
+  origin_lat: number;
+  origin_lon: number;
+  radius_km: number;
+  commodity: string;
+  quantity_tonnes: number;
+  vehicle_key: string;
+  vehicle_label: string;
+  diesel_price_rs_per_l: number;
+  ambient_c: number;
+  snapshot_date: string | null;
+  considered: number;
+  caveats: string[];
+  infeasible: RecommendInfeasible[];
+  ranked: RecommendItem[];
+};
+
+export function fetchRecommend(params: {
+  originLat: number;
+  originLon: number;
+  commodity: string;
+  quantityTonnes: number;
+  vehicle: string;
+  dieselPriceRsPerL: number;
+  radiusKm?: number;
+}): Promise<RecommendResponse> {
+  const qs = new URLSearchParams({
+    origin_lat: String(params.originLat),
+    origin_lon: String(params.originLon),
+    commodity: params.commodity,
+    quantity_tonnes: String(params.quantityTonnes),
+    vehicle: params.vehicle,
+    diesel_price_rs_per_l: String(params.dieselPriceRsPerL),
+  });
+  if (params.radiusKm) qs.set("radius_km", String(params.radiusKm));
+  return get<RecommendResponse>(`/recommend?${qs}`);
+}
+
 export const formatINR = (rs: number): string =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",

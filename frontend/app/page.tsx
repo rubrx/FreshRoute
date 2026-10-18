@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, CheckCircle, Leaf, MapPin } from "lucide-react";
 
-import { KpiCard } from "./components/KpiCard";
 import { Panel } from "./components/Panel";
 import { SpreadBar } from "./components/SpreadBar";
 import {
@@ -19,88 +18,299 @@ export default async function Home() {
   const featured = arb.rows[0];
 
   return (
-    <div className="mx-auto max-w-6xl px-6 pt-24 pb-28">
-      <section className="grid grid-cols-1 items-start gap-12 lg:grid-cols-[1.35fr_1fr] lg:gap-20">
-        <div>
-          <h1
-            className="text-5xl leading-[1.02] tracking-[-0.025em] text-[color:var(--color-fg)] md:text-6xl"
-            style={{ fontFamily: "var(--font-serif)", fontWeight: 400 }}
-          >
-            Where your produce{" "}
-            <span className="italic text-[color:var(--color-accent)]">sells for more.</span>
-          </h1>
-          <p className="mt-6 max-w-md text-lg leading-8 text-[color:var(--color-fg-muted)]">
-            Live mandi prices across India, netted for freight and commission.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Link
-              href="/arbitrage"
-              className="inline-flex items-center gap-2 rounded-full bg-[color:var(--color-accent)] px-5 py-2.5 text-sm font-medium text-[color:var(--color-accent-ink)] transition-transform hover:-translate-y-0.5"
+    <div>
+
+      {/* ── Hero ──────────────────────────────────────────────────── */}
+      <section className="bg-[color:var(--color-bg)] pt-14 pb-20 md:pt-20 md:pb-28">
+        <div className="mx-auto max-w-6xl px-5 md:px-8">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-20">
+
+            {/* Left: headline + CTAs */}
+            <div>
+              {/* Script tagline — GreenBasket "Farm Fresh" equivalent */}
+              <div className="mb-4 flex items-center gap-2">
+                <Leaf
+                  size={16}
+                  className="text-[color:var(--color-accent)]"
+                  aria-hidden="true"
+                />
+                <span
+                  className="text-[color:var(--color-accent)] text-lg italic leading-none"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  Kisan Ka Saathi
+                </span>
+              </div>
+
+              {/* Main headline — large, bold, GreenBasket-sized */}
+              <h1
+                className="text-[2.8rem] leading-[1.05] tracking-tight text-[color:var(--color-fg)] md:text-[3.5rem] lg:text-[4rem]"
+                style={{ fontFamily: "var(--font-serif)", fontWeight: 600 }}
+              >
+                Apni Fasal Ka{" "}
+                <span className="text-[color:var(--color-accent)]">Best Mandi</span>{" "}
+                Yahan Milega.
+              </h1>
+
+              <p className="mt-5 max-w-md text-lg leading-8 text-[color:var(--color-fg-muted)]">
+                We rank every nearby mandi by what you actually pocket — after
+                fuel, spoilage, APMC commission, and cess. No guesswork.
+              </p>
+
+              {/* CTAs */}
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/recommend"
+                  className="inline-flex items-center gap-2 rounded-full bg-[color:var(--color-accent)] px-6 py-3.5 text-base font-semibold text-[color:var(--color-accent-ink)] shadow-[var(--shadow-1)] transition-all hover:bg-[color:var(--color-accent-mid)] hover:-translate-y-0.5"
+                >
+                  <MapPin size={17} aria-hidden="true" />
+                  Find Best Mandi
+                  <ArrowRight size={15} aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/arbitrage"
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-[color:var(--color-accent)] px-6 py-3 text-base font-semibold text-[color:var(--color-accent)] transition-colors hover:bg-[color:var(--color-accent-soft)]"
+                >
+                  Today&rsquo;s Spreads
+                </Link>
+              </div>
+
+              {/* Trust badges — GreenBasket "100% Organic · Fast Delivery" */}
+              <div className="mt-8 flex flex-wrap items-center gap-5">
+                {[
+                  "27 States covered",
+                  "781 Mandis tracked",
+                  "Updated daily",
+                ].map((badge) => (
+                  <div
+                    key={badge}
+                    className="flex items-center gap-1.5 text-sm text-[color:var(--color-fg-muted)]"
+                  >
+                    <CheckCircle
+                      size={14}
+                      className="text-[color:var(--color-accent)] shrink-0"
+                      aria-hidden="true"
+                    />
+                    {badge}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Today's opportunity card */}
+            {featured ? (
+              <Panel className="p-6 md:p-7">
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
+                      Today&rsquo;s widest spread
+                    </div>
+                    <div
+                      className="mt-2 text-2xl text-[color:var(--color-fg)]"
+                      style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
+                    >
+                      {featured.commodity}{" "}
+                      <span className="text-[color:var(--color-fg-muted)]">
+                        in
+                      </span>{" "}
+                      {featured.state}
+                    </div>
+                    <div className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
+                      {featured.mandis_reporting} mandis reporting
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[color:var(--color-accent-soft)] px-3 py-1 text-sm font-semibold tabular text-[color:var(--color-accent)]">
+                    +{formatNumber(featured.spread_pct, 1)}%
+                  </span>
+                </div>
+
+                <SpreadBar
+                  low={featured.min_price_rs_per_quintal}
+                  high={featured.max_price_rs_per_quintal}
+                  lowLabel={featured.low_market}
+                  highLabel={featured.high_market}
+                />
+
+                <div className="mt-5 flex items-center justify-between border-t border-[color:var(--color-line-soft)] pt-4">
+                  <span className="text-sm text-[color:var(--color-fg-dim)]">
+                    Price surplus
+                  </span>
+                  <span
+                    className="tabular text-xl font-semibold text-[color:var(--color-fg)]"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
+                    {formatINR(featured.spread_rs_per_quintal)}
+                    <span className="ml-1.5 text-xs font-normal text-[color:var(--color-fg-dim)]">
+                      / qtl
+                    </span>
+                  </span>
+                </div>
+
+                <Link
+                  href="/recommend"
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-accent-soft)] py-3 text-sm font-semibold text-[color:var(--color-accent)] transition-colors hover:bg-[color:var(--color-accent)] hover:text-[color:var(--color-accent-ink)]"
+                >
+                  <MapPin size={14} aria-hidden="true" />
+                  Find mandi near me
+                </Link>
+              </Panel>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stats bar — dark green, GreenBasket footer strip style ── */}
+      <section className="bg-[color:var(--color-accent)] py-10">
+        <div className="mx-auto max-w-6xl px-5">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            {summary.cards.map((c) => (
+              <div key={c.label} className="text-center">
+                <div
+                  className="text-3xl font-bold tabular text-[color:var(--color-accent-ink)] md:text-4xl"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  {c.value}
+                </div>
+                <div className="mt-1.5 text-sm font-medium text-[color:var(--color-accent-ink)]/80">
+                  {c.label}
+                </div>
+                {c.caption && (
+                  <div className="mt-0.5 text-xs text-[color:var(--color-accent-ink)]/55">
+                    {c.caption}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works — 3-step cards ─────────────────────────── */}
+      <section className="bg-[color:var(--color-bg-elev-2)] py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-5">
+          <div className="mb-12 text-center">
+            <div className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent)]">
+              Simple as 1-2-3
+            </div>
+            <h2
+              className="text-3xl text-[color:var(--color-fg)] md:text-4xl"
+              style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
             >
-              See today&rsquo;s spreads <ArrowUpRight size={15} />
-            </Link>
+              Find Your Best Mandi in 3 Taps
+            </h2>
+            <p className="mt-3 text-[color:var(--color-fg-muted)]">
+              No spreadsheet. No phone calls to commission agents.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {[
+              {
+                step: "1",
+                emoji: "🌿",
+                title: "Pick Your Produce",
+                desc: "Select tomato, onion, potato, or banana. We'll handle the rest.",
+              },
+              {
+                step: "2",
+                emoji: "📍",
+                title: "Share Your Location",
+                desc: "Tap to use GPS — or type your village or district name.",
+              },
+              {
+                step: "3",
+                emoji: "₹",
+                title: "See Net Earnings",
+                desc: "Get mandis ranked by what you actually pocket after all costs.",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-2xl bg-[color:var(--color-bg-elev)] p-7 shadow-[var(--shadow-1)] text-center"
+              >
+                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)] text-3xl">
+                  {item.emoji}
+                </div>
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-accent)]">
+                  Step {item.step}
+                </div>
+                <h3
+                  className="text-lg font-semibold text-[color:var(--color-fg)]"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  {item.title}
+                </h3>
+                <p className="mt-2.5 text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
             <Link
-              href="/estimate"
-              className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-line)] px-5 py-2.5 text-sm font-medium text-[color:var(--color-fg)] transition-colors hover:bg-[color:var(--color-bg-elev-2)]"
+              href="/recommend"
+              className="inline-flex items-center gap-2 rounded-full bg-[color:var(--color-accent)] px-8 py-4 text-base font-semibold text-[color:var(--color-accent-ink)] shadow-[var(--shadow-1)] transition-all hover:bg-[color:var(--color-accent-mid)] hover:-translate-y-0.5"
             >
-              Estimate a shipment
+              <MapPin size={18} aria-hidden="true" />
+              Try It Now — Free
+              <ArrowRight size={16} aria-hidden="true" />
             </Link>
           </div>
         </div>
+      </section>
 
-        {featured ? (
-          <Panel className="p-7">
-            <div className="mb-5 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
-                Today&rsquo;s widest spread
-              </span>
-              <span className="tabular text-[11px] font-medium text-[color:var(--color-accent)]">
-                +{formatNumber(featured.spread_pct, 1)}%
-              </span>
-            </div>
-            <div
-              className="text-2xl text-[color:var(--color-fg)]"
+      {/* ── Why FreshRoute — feature grid ────────────────────────── */}
+      <section className="py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-5">
+          <div className="mb-10 text-center">
+            <h2
+              className="text-3xl text-[color:var(--color-fg)] md:text-4xl"
               style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
             >
-              {featured.commodity}{" "}
-              <span className="text-[color:var(--color-fg-muted)]">in</span>{" "}
-              {featured.state}
-            </div>
-            <div className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
-              {featured.mandis_reporting} mandis reporting
-            </div>
-            <div className="mt-6">
-              <SpreadBar
-                low={featured.min_price_rs_per_quintal}
-                high={featured.max_price_rs_per_quintal}
-                lowLabel={featured.low_market}
-                highLabel={featured.high_market}
-              />
-            </div>
-            <div className="mt-6 flex items-center justify-between border-t border-[color:var(--color-line-soft)] pt-4 text-sm">
-              <span className="text-[color:var(--color-fg-dim)]">Surplus</span>
-              <span
-                className="tabular text-[color:var(--color-fg)]"
-                style={{ fontFamily: "var(--font-serif)" }}
+              Why Farmers Choose FreshRoute
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: "🚛",
+                title: "Freight Included",
+                desc: "Diesel cost calculated for your vehicle type and distance.",
+              },
+              {
+                icon: "🍅",
+                title: "Spoilage Check",
+                desc: "Only shows mandis your produce can actually reach alive.",
+              },
+              {
+                icon: "📊",
+                title: "All Fees Netted",
+                desc: "APMC commission, cess, labour — deducted before ranking.",
+              },
+              {
+                icon: "🕐",
+                title: "Daily Updates",
+                desc: "Price data refreshed every day from official sources.",
+              },
+            ].map((f) => (
+              <div
+                key={f.title}
+                className="rounded-2xl border border-[color:var(--color-line-soft)] bg-[color:var(--color-bg-elev)] p-6"
               >
-                {formatINR(featured.spread_rs_per_quintal)}
-                <span className="ml-1 text-xs text-[color:var(--color-fg-dim)]">/ qtl</span>
-              </span>
-            </div>
-          </Panel>
-        ) : null}
+                <div className="mb-4 text-3xl">{f.icon}</div>
+                <h3 className="mb-2 font-semibold text-[color:var(--color-fg)]">
+                  {f.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <section className="mt-24 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {summary.cards.map((c) => (
-          <KpiCard
-            key={c.label}
-            label={c.label}
-            value={c.value}
-            caption={c.caption}
-          />
-        ))}
-      </section>
     </div>
   );
 }
