@@ -119,6 +119,9 @@ def recommend_route(
                 price_status=r.price_status,
                 price_snapshot_date=r.price_snapshot_date,
                 why=r.why,
+                price_pct_rank_in_state=r.price_pct_rank_in_state,
+                vs_state_median_rs_per_qtl=r.vs_state_median_rs_per_qtl,
+                vs_national_median_rs_per_qtl=r.vs_national_median_rs_per_qtl,
                 costs=RecommendationCostBreakdown(
                     fuel_litres=r.costs.fuel_litres,
                     fuel_rs=r.costs.fuel_rs,

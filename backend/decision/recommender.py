@@ -41,6 +41,7 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend.analysis.market_intelligence import build_market_context_map
 from backend.cost.model import QUINTALS_PER_TONNE, load_state_costs
 from backend.decision.geo import Centroid, estimated_road_km, resolve_centroid
 from backend.decision.spoilage import (
@@ -107,6 +108,11 @@ class Recommendation:
     price_status: str            # "live" — echoed for UI truth-labelling
     price_snapshot_date: date
     why: str                     # short recommendation summary
+
+    # Price context relative to peers
+    price_pct_rank_in_state: float = 50.0   # 0=cheapest, 100=priciest in state
+    vs_state_median_rs_per_qtl: float = 0.0
+    vs_national_median_rs_per_qtl: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -217,6 +223,10 @@ def recommend(
 
     snapshot_date: date | None = raw[0]["snapshot_date"] if raw else None
 
+    # Price context map: market_id → percentile rank + vs-median signals.
+    # Built once, O(N) over the snapshot — cheap relative to the loop.
+    context_map = build_market_context_map(db, commodity)
+
     considered = 0
     ranked: list[Recommendation] = []
     infeasible: list[InfeasibleCandidate] = []
@@ -310,9 +320,17 @@ def recommend(
             total_deductions_rs=round(total_ded, 2),
         )
 
+        ctx = context_map.get(int(row["market_id"]))
+        rank_label = ""
+        if ctx:
+            pct = ctx.price_pct_rank_in_state
+            if pct >= 90:
+                rank_label = f" Top-{int(100 - pct) + 1}% price in {row['state']}."
+            elif pct >= 75:
+                rank_label = f" Upper-quartile price in {row['state']}."
         why = (
             f"₹{net / quantity_tonnes:,.0f}/tonne net after {spoilage.spoilage_fraction*100:.0f}% "
-            f"expected spoilage and freight over {distance:.0f} km."
+            f"expected spoilage and freight over {distance:.0f} km.{rank_label}"
         )
 
         ranked.append(
@@ -337,6 +355,9 @@ def recommend(
                 price_status="live",
                 price_snapshot_date=row["snapshot_date"],
                 why=why,
+                price_pct_rank_in_state=ctx.price_pct_rank_in_state if ctx else 50.0,
+                vs_state_median_rs_per_qtl=ctx.vs_state_median_rs_per_qtl if ctx else 0.0,
+                vs_national_median_rs_per_qtl=ctx.vs_national_median_rs_per_qtl if ctx else 0.0,
             )
         )
 

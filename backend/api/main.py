@@ -1,15 +1,17 @@
-"""FreshRoute demo API — read-only surface over `market_daily` + `cost/model`.
+"""FreshRoute API — read-only surface over `market_daily` + decision engine.
 
 Route inventory:
-    GET /health                        Liveness ping
-    GET /summary                       KPI cards for the dashboard home
-    GET /markets/facets                Distinct commodities + states
-    GET /markets/arbitrage             Ranked intra-state spreads
-    GET /markets/prices                Per-mandi prices for a commodity
-    GET /cost/estimate                 Itemized ₹ breakdown for a consignment
-
-Phase 5 will extend this surface with `/recommend` once the forecaster
-(Phase 3) and the freshness engine (Phase 4) land.
+    GET /health                           Liveness ping
+    GET /summary                          KPI cards for the dashboard home
+    GET /markets/facets                   Distinct commodities + states
+    GET /markets/arbitrage                Ranked intra-state spreads
+    GET /markets/prices                   Per-mandi prices for a commodity
+    GET /cost/estimate                    Itemized ₹ breakdown for a consignment
+    GET /recommend/vehicles               Vehicle catalogue
+    GET /recommend                        Best mandi ranked by net ₹/tonne
+    GET /intel/commodity-summary          National stats + state rankings
+    GET /intel/commodity-overview         Multi-commodity dashboard widget
+    GET /intel/net-spread                 All reachable mandis, net ₹/quintal
 """
 
 from __future__ import annotations
@@ -17,14 +19,14 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routers import costs, markets, recommend, summary
+from backend.api.routers import costs, intelligence, markets, recommend, summary
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="FreshRoute API",
-        version="0.1.0",
-        summary="Read-only demo surface over the Phase 1+2 pipeline.",
+        version="0.2.0",
+        summary="Read-only surface: prices, arbitrage, cost model, recommendation, and intelligence.",
     )
 
     # CORS: local dev only. Tighten before any deployment.
@@ -44,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(markets.router)
     app.include_router(costs.router)
     app.include_router(recommend.router)
+    app.include_router(intelligence.router)
     return app
 
 

@@ -145,6 +145,19 @@ class RecommendationItem(BaseModel):
     why: str
     costs: RecommendationCostBreakdown
     spoilage: RecommendationSpoilage
+    # Price context — how does this mandi compare to others?
+    price_pct_rank_in_state: float = Field(
+        50.0,
+        description="Percentile rank of this mandi's price within its state (0=cheapest, 100=priciest).",
+    )
+    vs_state_median_rs_per_qtl: float = Field(
+        0.0,
+        description="Premium over state median (₹/qtl). Negative = below median.",
+    )
+    vs_national_median_rs_per_qtl: float = Field(
+        0.0,
+        description="Premium over national median (₹/qtl). Negative = below median.",
+    )
 
 
 class RecommendationInfeasible(BaseModel):
@@ -170,3 +183,75 @@ class RecommendationResponse(BaseModel):
     caveats: list[str]
     infeasible: list[RecommendationInfeasible]
     ranked: list[RecommendationItem]
+
+
+# ── Intelligence endpoints ────────────────────────────────────────────────────
+
+class StateRankRow(BaseModel):
+    state: str
+    median_price: float
+    max_price: float
+    min_price: float
+    mandis_reporting: int
+    rank: int
+
+
+class CommoditySummaryResponse(BaseModel):
+    """National price statistics + state rankings for one commodity."""
+    commodity: str
+    snapshot_date: date | None
+    national_median: float
+    p25: float
+    p75: float
+    national_max: float
+    national_min: float
+    mandis_count: int
+    states_count: int
+    state_rankings: list[StateRankRow]
+
+
+class CommodityOverviewItem(BaseModel):
+    commodity: str
+    national_median: float
+    national_max: float
+    mandis_count: int
+    best_state: str
+    best_state_median: float
+
+
+class CommodityOverviewResponse(BaseModel):
+    """One-row summary per commodity for the dashboard home widget."""
+    snapshot_date: date | None
+    commodities: list[CommodityOverviewItem]
+
+
+class NetMarketRow(BaseModel):
+    """A single mandi with freight-adjusted net price per quintal."""
+    market_id: int
+    market_name: str
+    district: str
+    state: str
+    distance_km: float
+    modal_price_rs_per_qtl: float = Field(description="Raw mandi price (₹/qtl)")
+    net_price_rs_per_qtl: float = Field(description="After freight + all fees (₹/qtl)")
+    freight_rs_per_qtl: float
+    fees_rs_per_qtl: float = Field(description="APMC + cess + entry + labour + weighment (₹/qtl)")
+    spoilage_pct: float
+    feasible: bool
+
+
+class NetSpreadResponse(BaseModel):
+    """All reachable mandis for a farmer's location, ranked by net price."""
+    commodity: str
+    origin_lat: float
+    origin_lon: float
+    radius_km: float
+    snapshot_date: date | None
+    total_markets: int
+    feasible_count: int
+    best_net_price: float = Field(description="Highest net ₹/qtl among feasible mandis")
+    median_net_price: float
+    potential_uplift_pct: float = Field(
+        description="% gain of best mandi vs median net price"
+    )
+    markets: list[NetMarketRow]
