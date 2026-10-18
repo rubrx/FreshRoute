@@ -11,10 +11,7 @@ export default function RecommendPage() {
   return (
     <div className="mx-auto max-w-2xl px-5 pt-10 pb-28">
       <div className="mb-8">
-        <h1
-          className="text-3xl tracking-tight text-[color:var(--color-fg)]"
-          style={{ fontFamily: "var(--font-serif)", fontWeight: 400 }}
-        >
+        <h1 className="text-3xl font-bold tracking-tight text-[color:var(--color-fg)]">
           Find your best mandi
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[color:var(--color-fg-muted)]">

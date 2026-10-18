@@ -39,10 +39,7 @@ export default async function MandisPage({
         <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-[color:var(--color-fg-dim)]">
           {prices.snapshot_date ?? "—"}
         </div>
-        <h1
-          className="text-4xl leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]"
-          style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-        >
+        <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]">
           {title}
         </h1>
         <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">
@@ -146,10 +143,7 @@ export default async function MandisPage({
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div
-                    className="tabular text-base font-medium text-[color:var(--color-fg)]"
-                    style={{ fontFamily: "var(--font-serif)" }}
-                  >
+                  <div className="tabular text-base font-medium text-[color:var(--color-fg)]">
                     {formatINR(r.modal_price_rs_per_quintal)}
                   </div>
                   <div className="text-[10px] text-[color:var(--color-fg-dim)]">₹/qtl modal</div>
@@ -234,10 +228,7 @@ function SmallStat({
       <div className="text-[10px] uppercase tracking-wider text-[color:var(--color-fg-dim)]">
         {label}
       </div>
-      <div
-        className="mt-2 text-xl tabular text-[color:var(--color-fg)]"
-        style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-      >
+      <div className="mt-2 text-xl font-semibold tabular text-[color:var(--color-fg)]">
         {value}
       </div>
       {caption ? (

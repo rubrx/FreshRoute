@@ -12,10 +12,7 @@ export function KpiCard({ label, value, caption }: Props) {
       <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
         {label}
       </div>
-      <div
-        className="mt-3 text-2xl leading-tight tabular text-[color:var(--color-fg)] md:text-3xl"
-        style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-      >
+      <div className="mt-3 text-2xl font-bold leading-tight tabular text-[color:var(--color-fg)] md:text-3xl">
         {value}
       </div>
       {caption ? (

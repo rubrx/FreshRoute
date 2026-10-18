@@ -23,10 +23,7 @@ export default async function EstimatePage() {
   return (
     <div className="mx-auto max-w-5xl px-6 pt-20 pb-24">
       <div className="mb-10">
-        <h1
-          className="text-4xl leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]"
-          style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-        >
+        <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]">
           What does a shipment earn?
         </h1>
         <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">

@@ -46,10 +46,7 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-fg)] text-[11px] font-semibold text-[color:var(--color-bg)]">
                 {item.rank}
               </span>
-              <span
-                className="truncate text-base font-medium text-[color:var(--color-fg)]"
-                style={{ fontFamily: "var(--font-serif)" }}
-              >
+              <span className="truncate text-base font-semibold text-[color:var(--color-fg)]">
                 {item.market_name}
               </span>
             </div>
@@ -68,10 +65,7 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
           <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
             Net realization
           </div>
-          <div
-            className="mt-1 text-3xl tabular text-[color:var(--color-fg)] md:text-4xl"
-            style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-          >
+          <div className="mt-1 text-3xl font-bold tabular text-[color:var(--color-fg)] md:text-4xl">
             {formatINR(item.net_rs_per_tonne)}
             <span className="ml-1.5 text-base font-normal text-[color:var(--color-fg-muted)]">
               /tonne

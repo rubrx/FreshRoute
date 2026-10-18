@@ -34,18 +34,14 @@ export default async function Home() {
                   className="text-[color:var(--color-accent)]"
                   aria-hidden="true"
                 />
-                <span
-                  className="text-[color:var(--color-accent)] text-lg italic leading-none"
-                  style={{ fontFamily: "var(--font-serif)" }}
-                >
+                <span className="text-[color:var(--color-accent)] text-sm font-medium leading-none">
                   Kisan Ka Saathi
                 </span>
               </div>
 
               {/* Main headline — large, bold, GreenBasket-sized */}
               <h1
-                className="text-[2.8rem] leading-[1.05] tracking-tight text-[color:var(--color-fg)] md:text-[3.5rem] lg:text-[4rem]"
-                style={{ fontFamily: "var(--font-serif)", fontWeight: 600 }}
+                className="text-[2.8rem] leading-[1.05] tracking-tight font-bold text-[color:var(--color-fg)] md:text-[3.5rem] lg:text-[4rem]"
               >
                 Apni Fasal Ka{" "}
                 <span className="text-[color:var(--color-accent)]">Best Mandi</span>{" "}
@@ -53,8 +49,8 @@ export default async function Home() {
               </h1>
 
               <p className="mt-5 max-w-md text-lg leading-8 text-[color:var(--color-fg-muted)]">
-                We rank every nearby mandi by what you actually pocket — after
-                fuel, spoilage, APMC commission, and cess. No guesswork.
+                We rank every nearby mandi by what you actually pocket, after
+                freight, spoilage, and all fees. No guesswork.
               </p>
 
               {/* CTAs */}
@@ -105,10 +101,7 @@ export default async function Home() {
                     <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
                       Today&rsquo;s widest spread
                     </div>
-                    <div
-                      className="mt-2 text-2xl text-[color:var(--color-fg)]"
-                      style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-                    >
+                    <div className="mt-2 text-2xl font-semibold text-[color:var(--color-fg)]">
                       {featured.commodity}{" "}
                       <span className="text-[color:var(--color-fg-muted)]">
                         in
@@ -135,10 +128,7 @@ export default async function Home() {
                   <span className="text-sm text-[color:var(--color-fg-dim)]">
                     Price surplus
                   </span>
-                  <span
-                    className="tabular text-xl font-semibold text-[color:var(--color-fg)]"
-                    style={{ fontFamily: "var(--font-serif)" }}
-                  >
+                  <span className="tabular text-xl font-semibold text-[color:var(--color-fg)]">
                     {formatINR(featured.spread_rs_per_quintal)}
                     <span className="ml-1.5 text-xs font-normal text-[color:var(--color-fg-dim)]">
                       / qtl
@@ -165,10 +155,7 @@ export default async function Home() {
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {summary.cards.map((c) => (
               <div key={c.label} className="text-center">
-                <div
-                  className="text-3xl font-bold tabular text-[color:var(--color-accent-ink)] md:text-4xl"
-                  style={{ fontFamily: "var(--font-serif)" }}
-                >
+                <div className="text-3xl font-bold tabular text-[color:var(--color-accent-ink)] md:text-4xl tracking-tight">
                   {c.value}
                 </div>
                 <div className="mt-1.5 text-sm font-medium text-[color:var(--color-accent-ink)]/80">
@@ -192,14 +179,11 @@ export default async function Home() {
             <div className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent)]">
               Simple as 1-2-3
             </div>
-            <h2
-              className="text-3xl text-[color:var(--color-fg)] md:text-4xl"
-              style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-            >
+            <h2 className="text-3xl font-bold text-[color:var(--color-fg)] md:text-4xl">
               Find Your Best Mandi in 3 Taps
             </h2>
             <p className="mt-3 text-[color:var(--color-fg-muted)]">
-              No spreadsheet. No phone calls to commission agents.
+              No spreadsheet. No calls to agents.
             </p>
           </div>
 
@@ -215,7 +199,7 @@ export default async function Home() {
                 step: "2",
                 emoji: "📍",
                 title: "Share Your Location",
-                desc: "Tap to use GPS — or type your village or district name.",
+                desc: "Tap to share your GPS location or enter your district name.",
               },
               {
                 step: "3",
@@ -234,10 +218,7 @@ export default async function Home() {
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-accent)]">
                   Step {item.step}
                 </div>
-                <h3
-                  className="text-lg font-semibold text-[color:var(--color-fg)]"
-                  style={{ fontFamily: "var(--font-serif)" }}
-                >
+                <h3 className="text-lg font-semibold text-[color:var(--color-fg)]">
                   {item.title}
                 </h3>
                 <p className="mt-2.5 text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
@@ -253,7 +234,7 @@ export default async function Home() {
               className="inline-flex items-center gap-2 rounded-full bg-[color:var(--color-accent)] px-8 py-4 text-base font-semibold text-[color:var(--color-accent-ink)] shadow-[var(--shadow-1)] transition-all hover:bg-[color:var(--color-accent-mid)] hover:-translate-y-0.5"
             >
               <MapPin size={18} aria-hidden="true" />
-              Try It Now — Free
+              Try It Free
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
           </div>
@@ -264,10 +245,7 @@ export default async function Home() {
       <section className="py-16 md:py-20">
         <div className="mx-auto max-w-6xl px-5">
           <div className="mb-10 text-center">
-            <h2
-              className="text-3xl text-[color:var(--color-fg)] md:text-4xl"
-              style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-            >
+            <h2 className="text-3xl font-bold text-[color:var(--color-fg)] md:text-4xl">
               Why Farmers Choose FreshRoute
             </h2>
           </div>
@@ -281,12 +259,12 @@ export default async function Home() {
               {
                 icon: "🍅",
                 title: "Spoilage Check",
-                desc: "Only shows mandis your produce can actually reach alive.",
+                desc: "Only shows mandis your produce can reach before spoiling.",
               },
               {
                 icon: "📊",
                 title: "All Fees Netted",
-                desc: "APMC commission, cess, labour — deducted before ranking.",
+                desc: "All APMC fees and levies deducted before ranking.",
               },
               {
                 icon: "🕐",

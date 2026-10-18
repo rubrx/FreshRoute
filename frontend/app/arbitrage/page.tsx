@@ -22,10 +22,7 @@ export default async function ArbitragePage({
           <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-[color:var(--color-fg-dim)]">
             {arb.snapshot_date ?? "—"}
           </div>
-          <h1
-            className="text-4xl leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]"
-            style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-          >
+          <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]">
             Same-day spreads
           </h1>
           <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">
@@ -48,10 +45,7 @@ export default async function ArbitragePage({
                   <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
                     {row.commodity}
                   </div>
-                  <div
-                    className="mt-1 text-lg text-[color:var(--color-fg)]"
-                    style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-                  >
+                  <div className="mt-1 text-lg font-semibold text-[color:var(--color-fg)]">
                     {row.state}
                   </div>
                   <div className="mt-0.5 text-xs text-[color:var(--color-fg-muted)]">
@@ -67,10 +61,7 @@ export default async function ArbitragePage({
                 />
 
                 <div className="flex flex-col items-end gap-2 text-right md:h-full md:justify-between">
-                  <span
-                    className="tabular text-lg text-[color:var(--color-accent)]"
-                    style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-                  >
+                  <span className="tabular text-lg font-semibold text-[color:var(--color-accent)]">
                     +{formatNumber(row.spread_pct, 1)}%
                   </span>
                   <span className="text-xs tabular text-[color:var(--color-fg-muted)]">

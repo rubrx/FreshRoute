@@ -71,7 +71,6 @@ export function CostWaterfall({ costs, grossRevenue, spoilageLoss, netRevenue }:
               ? "text-[color:var(--color-fg)]"
               : "text-[color:var(--color-danger)]",
           ].join(" ")}
-          style={{ fontFamily: "var(--font-serif)" }}
         >
           {formatINR(netRevenue)}
         </span>

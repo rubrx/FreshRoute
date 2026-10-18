@@ -205,10 +205,7 @@ function ResultView({ result }: { result: CostEstimate }) {
         Net revenue
       </div>
       <div className="mt-2 flex items-baseline gap-3">
-        <span
-          className="text-4xl tabular text-[color:var(--color-fg)]"
-          style={{ fontFamily: "var(--font-serif)", fontWeight: 500 }}
-        >
+        <span className="text-4xl font-bold tabular text-[color:var(--color-fg)]">
           {formatINR(result.net_revenue_rs)}
         </span>
         <span className="text-sm tabular text-[color:var(--color-fg-muted)]">
