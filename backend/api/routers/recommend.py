@@ -1,8 +1,8 @@
-"""GET /recommend — the farmer-facing routing decision.
+"""Recommendation engine — ranks mandis by net ₹/tonne after costs and spoilage.
 
-Takes an origin (lat/lon), a commodity, a quantity, a vehicle, and a
-diesel price. Returns the ranked list of feasible mandis and the
-infeasible ones with reasons.
+Endpoints:
+    GET /recommend/vehicles     Vehicle catalogue (key, label, truck size).
+    GET /recommend              Ranked feasible mandis + nearest_mandi for GPS reference.
 """
 
 from __future__ import annotations
@@ -77,6 +77,50 @@ def recommend_route(
         max_results=max_results,
     )
 
+    def _serialize_item(r: object) -> RecommendationItem:  # type: ignore[type-arg]
+        return RecommendationItem(
+            rank=r.rank,
+            market_id=r.market_id,
+            market_name=r.market_name,
+            district=r.district,
+            state=r.state,
+            distance_km=r.distance_km,
+            distance_source=r.distance_source,
+            transit_hours=r.transit_hours,
+            trips=r.trips,
+            modal_price_rs_per_quintal=r.modal_price_rs_per_quintal,
+            gross_revenue_rs=r.gross_revenue_rs,
+            expected_saleable_revenue_rs=r.expected_saleable_revenue_rs,
+            net_revenue_rs=r.net_revenue_rs,
+            net_rs_per_tonne=r.net_rs_per_tonne,
+            price_status=r.price_status,
+            price_snapshot_date=r.price_snapshot_date,
+            why=r.why,
+            price_pct_rank_in_state=r.price_pct_rank_in_state,
+            vs_state_median_rs_per_qtl=r.vs_state_median_rs_per_qtl,
+            vs_national_median_rs_per_qtl=r.vs_national_median_rs_per_qtl,
+            costs=RecommendationCostBreakdown(
+                fuel_litres=r.costs.fuel_litres,
+                fuel_rs=r.costs.fuel_rs,
+                other_freight_rs=r.costs.other_freight_rs,
+                apmc_commission_rs=r.costs.apmc_commission_rs,
+                cess_rs=r.costs.cess_rs,
+                entry_fee_rs=r.costs.entry_fee_rs,
+                labour_rs=r.costs.labour_rs,
+                weighment_rs=r.costs.weighment_rs,
+                total_deductions_rs=r.costs.total_deductions_rs,
+            ),
+            spoilage=RecommendationSpoilage(
+                ambient_c=r.spoilage.ambient_c,
+                effective_c=r.spoilage.effective_c,
+                sl_opt_days=r.spoilage.sl_opt_days,
+                sl_at_effective_days=r.spoilage.sl_at_effective_days,
+                spoilage_fraction=r.spoilage.spoilage_fraction,
+                feasible=r.spoilage.feasible,
+                reason=r.spoilage.reason,
+            ),
+        )
+
     return RecommendationResponse(
         origin_lat=result.origin_lat,
         origin_lon=result.origin_lon,
@@ -100,49 +144,6 @@ def recommend_route(
             )
             for i in result.infeasible
         ],
-        ranked=[
-            RecommendationItem(
-                rank=r.rank,
-                market_id=r.market_id,
-                market_name=r.market_name,
-                district=r.district,
-                state=r.state,
-                distance_km=r.distance_km,
-                distance_source=r.distance_source,
-                transit_hours=r.transit_hours,
-                trips=r.trips,
-                modal_price_rs_per_quintal=r.modal_price_rs_per_quintal,
-                gross_revenue_rs=r.gross_revenue_rs,
-                expected_saleable_revenue_rs=r.expected_saleable_revenue_rs,
-                net_revenue_rs=r.net_revenue_rs,
-                net_rs_per_tonne=r.net_rs_per_tonne,
-                price_status=r.price_status,
-                price_snapshot_date=r.price_snapshot_date,
-                why=r.why,
-                price_pct_rank_in_state=r.price_pct_rank_in_state,
-                vs_state_median_rs_per_qtl=r.vs_state_median_rs_per_qtl,
-                vs_national_median_rs_per_qtl=r.vs_national_median_rs_per_qtl,
-                costs=RecommendationCostBreakdown(
-                    fuel_litres=r.costs.fuel_litres,
-                    fuel_rs=r.costs.fuel_rs,
-                    other_freight_rs=r.costs.other_freight_rs,
-                    apmc_commission_rs=r.costs.apmc_commission_rs,
-                    cess_rs=r.costs.cess_rs,
-                    entry_fee_rs=r.costs.entry_fee_rs,
-                    labour_rs=r.costs.labour_rs,
-                    weighment_rs=r.costs.weighment_rs,
-                    total_deductions_rs=r.costs.total_deductions_rs,
-                ),
-                spoilage=RecommendationSpoilage(
-                    ambient_c=r.spoilage.ambient_c,
-                    effective_c=r.spoilage.effective_c,
-                    sl_opt_days=r.spoilage.sl_opt_days,
-                    sl_at_effective_days=r.spoilage.sl_at_effective_days,
-                    spoilage_fraction=r.spoilage.spoilage_fraction,
-                    feasible=r.spoilage.feasible,
-                    reason=r.spoilage.reason,
-                ),
-            )
-            for r in result.ranked
-        ],
+        ranked=[_serialize_item(r) for r in result.ranked],
+        nearest_mandi=_serialize_item(result.nearest_mandi) if result.nearest_mandi else None,
     )

@@ -2,9 +2,22 @@ import Link from "next/link";
 
 import { MandiChart } from "@/app/components/MandiChart";
 import { Panel } from "@/app/components/Panel";
-import { fetchFacets, fetchPrices, formatINR } from "@/app/lib/api";
+import {
+  fetchCommodityOverview,
+  fetchFacets,
+  fetchPrices,
+  formatINR,
+  type MandiPrice,
+} from "@/app/lib/api";
 
-type Search = { commodity?: string; state?: string };
+type Search = { commodity?: string; state?: string; view?: string };
+
+type StateRanking = {
+  state: string;
+  medianPrice: number;
+  topMandi: { market: string; price: number };
+  mandisCount: number;
+};
 
 export default async function MandisPage({
   searchParams,
@@ -14,12 +27,17 @@ export default async function MandisPage({
 
   const commodity = params.commodity ?? facets.commodities[0] ?? "Tomato";
   const state = params.state ?? "";
+  const view = params.view === "state" ? "state" : "price";
 
-  const prices = await fetchPrices({
-    commodity,
-    state: state || undefined,
-    limit: 60,
-  });
+  const [prices, overview] = await Promise.all([
+    fetchPrices({ commodity, state: state || undefined, limit: 60 }),
+    fetchCommodityOverview().catch(() => null),
+  ]);
+
+  const nationalMedian =
+    overview?.commodities.find(
+      (c) => c.commodity.toLowerCase() === commodity.toLowerCase()
+    )?.national_median ?? undefined;
 
   const stats =
     prices.rows.length > 0
@@ -31,7 +49,25 @@ export default async function MandisPage({
         }
       : null;
 
+  const stateRankings = !state ? computeStateRankings(prices.rows) : [];
+
+  const chartRows =
+    view === "state" && stateRankings.length > 0
+      ? stateRankings.map((s) => ({
+          market: s.state,
+          district: `${s.mandisCount} mandi${s.mandisCount !== 1 ? "s" : ""}`,
+          modal_price: s.medianPrice,
+        }))
+      : prices.rows.map((r) => ({
+          market: r.market,
+          district: r.district,
+          modal_price: r.modal_price_rs_per_quintal,
+        }));
+
   const title = state ? `${commodity} · ${state}` : commodity;
+  const baseHref = `/mandis?commodity=${encodeURIComponent(commodity)}${
+    state ? `&state=${encodeURIComponent(state)}` : ""
+  }`;
 
   return (
     <div className="mx-auto max-w-6xl px-6 pt-20 pb-24">
@@ -48,6 +84,7 @@ export default async function MandisPage({
       </div>
 
       <form action="/mandis" className="mb-10 flex flex-wrap items-end gap-3">
+        <input type="hidden" name="view" value={view} />
         <Field label="Commodity">
           <select
             name="commodity"
@@ -90,7 +127,11 @@ export default async function MandisPage({
       {stats ? (
         <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
           <SmallStat label="Reporting" value={String(stats.count)} caption="mandis" />
-          <SmallStat label="Median" value={formatINR(stats.median)} caption="₹/qtl" />
+          <SmallStat
+            label="Median"
+            value={formatINR(stats.median)}
+            caption={nationalMedian ? `nat. median ${formatINR(nationalMedian)}` : "₹/qtl"}
+          />
           <SmallStat
             label="High"
             value={formatINR(stats.hi.modal_price_rs_per_quintal)}
@@ -112,17 +153,97 @@ export default async function MandisPage({
         <>
           <Panel className="p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm text-[color:var(--color-fg)]">Top 15</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-medium text-[color:var(--color-fg)]">
+                  {view === "state" ? "By state (median)" : "Top 30"}
+                </h3>
+                {!state && (
+                  <div className="flex overflow-hidden rounded-full border border-[color:var(--color-line)] text-xs">
+                    <Link
+                      href={`${baseHref}&view=price`}
+                      className={[
+                        "px-3 py-1 font-medium transition-colors",
+                        view !== "state"
+                          ? "bg-[color:var(--color-fg)] text-[color:var(--color-bg)]"
+                          : "text-[color:var(--color-fg-muted)] hover:bg-[color:var(--color-bg-elev-2)]",
+                      ].join(" ")}
+                    >
+                      By price
+                    </Link>
+                    <Link
+                      href={`${baseHref}&view=state`}
+                      className={[
+                        "px-3 py-1 font-medium transition-colors",
+                        view === "state"
+                          ? "bg-[color:var(--color-fg)] text-[color:var(--color-bg)]"
+                          : "text-[color:var(--color-fg-muted)] hover:bg-[color:var(--color-bg-elev-2)]",
+                      ].join(" ")}
+                    >
+                      By state
+                    </Link>
+                  </div>
+                )}
+              </div>
               <span className="text-xs text-[color:var(--color-fg-muted)]">₹/quintal</span>
             </div>
             <MandiChart
-              rows={prices.rows.map((r) => ({
-                market: r.market,
-                district: r.district,
-                modal_price: r.modal_price_rs_per_quintal,
-              }))}
+              rows={chartRows}
+              nationalMedian={view === "price" ? nationalMedian : undefined}
             />
           </Panel>
+
+          {/* State ranking table */}
+          {stateRankings.length > 1 && (
+            <Panel className="mt-6 overflow-hidden">
+              <div className="border-b border-[color:var(--color-line-soft)] px-5 py-4">
+                <h3 className="text-sm font-medium text-[color:var(--color-fg)]">
+                  State ranking — {commodity}
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 border-b border-[color:var(--color-line-soft)] bg-[color:var(--color-bg-elev)] text-left text-[10px] uppercase tracking-wider text-[color:var(--color-fg-dim)]">
+                    <tr>
+                      <th className="px-5 py-2.5 font-medium">#</th>
+                      <th className="px-5 py-2.5 font-medium">State</th>
+                      <th className="px-5 py-2.5 text-right font-medium">Median</th>
+                      <th className="hidden px-5 py-2.5 font-medium md:table-cell">Top mandi</th>
+                      <th className="px-5 py-2.5 text-right font-medium">Reporting</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stateRankings.map((s, i) => (
+                      <tr
+                        key={s.state}
+                        className="border-b border-[color:var(--color-line-soft)]/60 last:border-none hover:bg-[color:var(--color-bg-elev-2)]/60"
+                      >
+                        <td className="px-5 py-2.5 tabular text-[color:var(--color-fg-dim)]">
+                          {i + 1}
+                        </td>
+                        <td className="px-5 py-2.5 font-medium text-[color:var(--color-fg)]">
+                          <Link
+                            href={`/mandis?commodity=${encodeURIComponent(commodity)}&state=${encodeURIComponent(s.state)}`}
+                            className="transition-colors hover:text-[color:var(--color-accent)]"
+                          >
+                            {s.state}
+                          </Link>
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular font-medium text-[color:var(--color-fg)]">
+                          {formatINR(s.medianPrice)}
+                        </td>
+                        <td className="hidden px-5 py-2.5 text-[color:var(--color-fg-muted)] md:table-cell">
+                          {s.topMandi.market}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular text-[color:var(--color-fg-muted)]">
+                          {s.mandisCount}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Panel>
+          )}
 
           {/* Mobile card list */}
           <div className="mt-6 space-y-2 md:hidden">
@@ -245,4 +366,32 @@ function median(nums: number[]): number {
   return sorted.length % 2 === 0
     ? (sorted[mid - 1] + sorted[mid]) / 2
     : sorted[mid];
+}
+
+function computeStateRankings(rows: MandiPrice[]): StateRanking[] {
+  const map = new Map<string, { prices: number[]; topMandi: { market: string; price: number } }>();
+
+  for (const r of rows) {
+    const entry = map.get(r.state);
+    if (!entry) {
+      map.set(r.state, {
+        prices: [r.modal_price_rs_per_quintal],
+        topMandi: { market: r.market, price: r.modal_price_rs_per_quintal },
+      });
+    } else {
+      entry.prices.push(r.modal_price_rs_per_quintal);
+      if (r.modal_price_rs_per_quintal > entry.topMandi.price) {
+        entry.topMandi = { market: r.market, price: r.modal_price_rs_per_quintal };
+      }
+    }
+  }
+
+  return [...map.entries()]
+    .map(([state, { prices: ps, topMandi }]) => ({
+      state,
+      medianPrice: median(ps),
+      topMandi,
+      mandisCount: ps.length,
+    }))
+    .sort((a, b) => b.medianPrice - a.medianPrice);
 }

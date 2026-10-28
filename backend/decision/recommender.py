@@ -136,11 +136,12 @@ class RecommendationResult:
     ambient_c: float
     snapshot_date: date | None
 
-    considered: int              # mandis inside the radius
+    considered: int
     ranked: list[Recommendation]
     infeasible: list[InfeasibleCandidate]
+    nearest_mandi: Recommendation | None  # closest by distance among ranked[]
 
-    caveats: list[str]           # data-truth disclosures for the UI
+    caveats: list[str]
 
 
 def _load_candidates(db: Session, commodity: str) -> list[dict]:
@@ -179,20 +180,17 @@ def _price_status_caveat(snapshot_date: date | None) -> list[str]:
     caveats: list[str] = []
     if snapshot_date:
         caveats.append(
-            f"Mandi prices are the latest available data.gov.in snapshot ({snapshot_date}). "
-            "Live intra-day quotes are not yet wired in."
+            f"Prices are the latest data.gov.in snapshot ({snapshot_date}). "
+            "Intra-day live quotes are not available."
         )
     caveats.append(
-        "Distances are haversine × 1.30 road-detour estimate; road distance via OSRM "
-        "will replace this in Phase 2."
+        "Distances are haversine × 1.30 road-detour estimate, not actual road distance."
     )
     caveats.append(
-        "Spoilage uses a Q10 shelf-life model at an assumed ambient temperature. "
-        "Route-sampled weather (Open-Meteo) is a Phase 4 upgrade."
+        "Spoilage uses a Q10 shelf-life model at the stated ambient temperature."
     )
     caveats.append(
-        "Freight and mandi charges (APMC, cess, entry fee, labour, weighment) are "
-        "seed values from data/reference/*.csv, not per-mandi live quotes."
+        "Freight and mandi charges are reference-table estimates, not per-mandi live quotes."
     )
     return caveats
 
@@ -367,6 +365,10 @@ def recommend(
         for i, r in enumerate(ranked[:max_results])
     ]
 
+    nearest_mandi: Recommendation | None = (
+        min(ranked, key=lambda r: r.distance_km) if ranked else None
+    )
+
     return RecommendationResult(
         origin_lat=origin_lat,
         origin_lon=origin_lon,
@@ -379,6 +381,7 @@ def recommend(
         snapshot_date=snapshot_date,
         considered=considered,
         ranked=ranked,
+        nearest_mandi=nearest_mandi,
         infeasible=sorted(infeasible, key=lambda x: x.distance_km)[:max_results],
         caveats=_price_status_caveat(snapshot_date),
     )

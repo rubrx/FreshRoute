@@ -2,21 +2,24 @@
 
 GET /intel/commodity-summary?commodity=X
     National price statistics + state rankings for one commodity today.
-    Useful for: "where is Tomato paying the most right now?"
 
 GET /intel/commodity-overview
     One-row summary per commodity (national median, peak, top state).
-    Powers the multi-commodity home-page widget.
 
 GET /intel/net-spread?commodity=X&lat=Y&lon=Z&vehicle=...&diesel=...&qty=...
-    All reachable mandis within radius, ranked by NET price per quintal
-    after freight + APMC + cess + labour. Per-quintal because farmers
-    think in quintals, not tonnes.
-    Useful for: "show me every market I can reach and what I actually pocket."
+    All reachable mandis within radius, ranked by NET price per quintal.
+
+GET /intel/seasonal?commodity=X&state=Y
+    52-week arrival-index series. Returns available=false until the
+    seasonal_index.parquet is generated (requires 3+ years of history).
 """
 
 from __future__ import annotations
 
+import datetime
+from pathlib import Path
+
+import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -33,6 +36,8 @@ from backend.api.schemas import (
     CommoditySummaryResponse,
     NetMarketRow,
     NetSpreadResponse,
+    SeasonalResponse,
+    SeasonalWeek,
     StateRankRow,
 )
 from backend.cost.model import QUINTALS_PER_TONNE, load_state_costs
@@ -241,4 +246,72 @@ def net_spread(
         median_net_price=median_net,
         potential_uplift_pct=uplift_pct,
         markets=markets,
+    )
+
+
+_SEASONAL_PARQUET = (
+    Path(__file__).resolve().parents[3] / "data" / "processed" / "seasonal_index.parquet"
+)
+
+
+@router.get("/seasonal", response_model=SeasonalResponse)
+def seasonal(
+    commodity: str = Query(..., description="Exact commodity name"),
+    state: str = Query(..., description="State name"),
+) -> SeasonalResponse:
+    """52-week arrival-index series for a commodity + state pair.
+
+    Returns available=false until seasonal_index.parquet exists.
+    """
+    if not _SEASONAL_PARQUET.exists():
+        return SeasonalResponse(
+            available=False,
+            reason="Seasonal data requires 3+ years of price history. Check back after the full backfill runs.",
+        )
+
+    try:
+        df = pd.read_parquet(_SEASONAL_PARQUET)
+    except Exception:
+        return SeasonalResponse(
+            available=False,
+            reason="Seasonal index file could not be read.",
+        )
+
+    mask = (df["commodity"].str.lower() == commodity.lower()) & (
+        df["state"].str.lower() == state.lower()
+    )
+    filtered = df[mask].copy()
+    if filtered.empty:
+        return SeasonalResponse(
+            available=False,
+            reason=f"No seasonal data for {commodity} in {state}.",
+        )
+
+    current_week = datetime.date.today().isocalendar().week
+
+    p33 = filtered["arrival_index"].quantile(0.33)
+    p66 = filtered["arrival_index"].quantile(0.66)
+
+    def _label(val: float) -> str:
+        if val >= p66:
+            return "glut"
+        if val <= p33:
+            return "lean"
+        return "normal"
+
+    weeks = [
+        SeasonalWeek(
+            iso_week=int(row["iso_week"]),
+            arrival_index=round(float(row["arrival_index"]), 3),
+            label=_label(float(row["arrival_index"])),
+        )
+        for _, row in filtered.sort_values("iso_week").iterrows()
+    ]
+
+    return SeasonalResponse(
+        available=True,
+        commodity=commodity,
+        state=state,
+        current_week=current_week,
+        weeks=weeks,
     )

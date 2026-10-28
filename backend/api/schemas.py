@@ -183,6 +183,11 @@ class RecommendationResponse(BaseModel):
     caveats: list[str]
     infeasible: list[RecommendationInfeasible]
     ranked: list[RecommendationItem]
+    nearest_mandi: RecommendationItem | None = Field(
+        None,
+        description="Closest mandi by distance among ranked results. "
+        "If different from ranked[0], the farmer is leaving money on the table.",
+    )
 
 
 # ── Intelligence endpoints ────────────────────────────────────────────────────
@@ -255,3 +260,34 @@ class NetSpreadResponse(BaseModel):
         description="% gain of best mandi vs median net price"
     )
     markets: list[NetMarketRow]
+
+
+# ── Geo endpoints ─────────────────────────────────────────────────────────────
+
+class DistrictRow(BaseModel):
+    district: str
+    lat: float
+    lon: float
+
+
+class DistrictsResponse(BaseModel):
+    state: str
+    count: int
+    districts: list[DistrictRow]
+
+
+# ── Seasonal intelligence ─────────────────────────────────────────────────────
+
+class SeasonalWeek(BaseModel):
+    iso_week: int
+    arrival_index: float
+    label: str = Field(description="glut | lean | normal")
+
+
+class SeasonalResponse(BaseModel):
+    available: bool
+    reason: str | None = None
+    commodity: str | None = None
+    state: str | None = None
+    current_week: int | None = None
+    weeks: list[SeasonalWeek] = []

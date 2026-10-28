@@ -12,6 +12,8 @@ Route inventory:
     GET /intel/commodity-summary          National stats + state rankings
     GET /intel/commodity-overview         Multi-commodity dashboard widget
     GET /intel/net-spread                 All reachable mandis, net ₹/quintal
+    GET /intel/seasonal                   52-week arrival-index for a commodity+state
+    GET /geo/districts                    District centroids for GPS-fallback picker
 """
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routers import costs, intelligence, markets, recommend, summary
+from backend.api.routers import costs, geo, intelligence, markets, recommend, summary
 
 
 def create_app() -> FastAPI:
@@ -47,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(costs.router)
     app.include_router(recommend.router)
     app.include_router(intelligence.router)
+    app.include_router(geo.router)
     return app
 
 

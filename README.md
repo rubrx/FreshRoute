@@ -1,104 +1,86 @@
 # FreshRoute
 
-Spoilage-aware mandi routing and price intelligence for Indian agri traders. Capstone project — IIIT Una, 2023–27.
+> Rank candidate mandis by expected net ₹/tonne after spoilage, freight, and commission — with a hard feasibility filter that rejects any destination the produce cannot survive.
 
-**Start here:**
-
-| Doc | Purpose |
-|---|---|
-| [`docs/proposal.md`](./docs/proposal.md) | The capstone proposal — problem, origin, differentiators, timeline, defense line |
-| [`docs/tech-stack.md`](./docs/tech-stack.md) | Every technology choice with rationale + what was rejected |
-| [`buildplan.md`](./buildplan.md) | Original scoping doc; retained for continuity |
-| [`CLAUDE.md`](./CLAUDE.md) | Session orientation for Claude — hard gates + ground rules |
-| [`PROGRESS.md`](./PROGRESS.md) | What's shipped, phase by phase |
-| [`TODO.md`](./TODO.md) | What's next, phase by phase |
-
-## What's shipped
-
-Phase 1 (data foundation) and Phase 2 (cost + freshness reference data + OSRM + geocoding scaffolding) — see [`PROGRESS.md`](./PROGRESS.md).
-
-
-## What's next
-
-Phase 3 (forecasting) — see [`TODO.md`](./TODO.md). Blocked on running the actual historical backfill and passing **Gate 1** (panel density ≥ 60% per mandi).
+Capstone project — IIIT Una, 2023–27. 100% free public data. No paid APIs.
 
 ---
 
-## Quickstart
-
-Prereqs: Docker, Python 3.11+, and `pip`.
-
-### 1. Start the database
+## Quick start (5 commands)
 
 ```bash
-cp .env.example .env      # tweak if you already run Postgres on 5433
+# 1. Database
+cp .env.example .env
 docker compose up -d db
-```
 
-Confirm it's up:
-
-```bash
-docker compose ps
-docker compose exec db pg_isready -U freshroute
-```
-
-### 2. Install the backend
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-### 3. Apply migrations
-
-```bash
+# 2. Backend
+cd backend && pip install -e . && cd ..
 python -m backend.cli migrate
-```
 
-You should see `Applied 4 migration(s): ['001', '002', '003', '004']`. Re-running is a no-op.
-
-### 4. Backfill data
-
-Start small to verify the SDK works:
-
-```bash
+# 3. Seed data (small test run — ~5 min)
 python -m backend.cli backfill \
     --states Maharashtra \
     --commodities Tomato \
     --start 2024-01-01
+
+# 4. API server
+uvicorn backend.api.main:app --reload
+# → http://127.0.0.1:8000/docs
+
+# 5. Frontend
+cd frontend && npm install && npm run dev
+# → http://localhost:3000
 ```
 
-Then run the full matrix for Phase 1. State choice depends on reporting density — the plan targets 2–3 states, 60–100 mandis:
+Full historical backfill (2007–present, 3 states × 4 commodities) takes several hours and is resumable.
 
-```bash
-python -m backend.cli backfill \
-    --states "Maharashtra,Karnataka,Uttar Pradesh" \
-    --commodities "Tomato,Onion,Potato,Banana" \
-    --start 2007-01-01
+---
+
+## Architecture
+
+```
+ data.gov.in  ──────────┐
+ Agmarknet SDK ─────────┤──► Ingestion ──► Postgres + TimescaleDB
+                        │        │              │
+             AH-66 CSV ─┘   costs.csv ─────────┤
+        district CSVs ──────────────────────────┤
+                                                │
+                OSRM (self-hosted) ─────────────┼──► FastAPI ──► Next.js
+              Open-Meteo (free) ────────────────┘    :8000      :3000
 ```
 
-The backfill is chunked by year and resumable — kill it any time; re-running picks up where it stopped (progress cursor in `data/raw/agmarknet/state.json`).
+The decision engine fetches price + route + weather at query time and returns a ranked list of feasible mandis — no precomputed scores.
 
-### 5. Data quality report
+---
 
-```bash
-python -m backend.cli quality --min-density 0.6
-```
+## API surface
 
-Writes `docs/data-quality-report.md`. Use it to decide which mandis clear the week-2 gate.
+| Method | Path | Returns |
+|--------|------|---------|
+| GET | `/summary` | KPI cards for the home dashboard |
+| GET | `/markets/facets` | Distinct commodities + states |
+| GET | `/markets/arbitrage` | Ranked intra-state price spreads |
+| GET | `/markets/prices` | Per-mandi prices for one commodity |
+| GET | `/cost/estimate` | Itemized ₹ breakdown for a consignment |
+| GET | `/recommend` | Best mandis ranked by net ₹/tonne |
+| GET | `/intel/commodity-overview` | Multi-commodity widget data |
+| GET | `/intel/seasonal` | 52-week arrival-index sparkline |
+| GET | `/geo/districts` | District lat/lon for GPS-fallback picker |
 
-### 6. Daily incremental pull (later)
+Full docs at `http://localhost:8000/docs` after starting the API.
 
-Hook this up to cron / a scheduled job:
+---
 
-```bash
-python -m backend.cli daily \
-    --states "Maharashtra,Karnataka" \
-    --commodities "Tomato,Onion,Potato,Banana" \
-    --lookback-days 7
-```
+## Data sources
+
+| Source | What | Access |
+|--------|------|--------|
+| [Agmarknet](https://agmarknet.gov.in) | 18 yr daily prices + arrivals | `agmarknet` PyPI SDK |
+| [data.gov.in](https://data.gov.in) | Live daily price feed | HTTP REST (prices only, no arrivals) |
+| USDA AH-66 | Shelf-life tables per commodity | Transcribed to `data/reference/shelf_life.csv` |
+| OSRM (self-hosted) | Road distances + travel times | Docker, Geofabrik India extract |
+| Open-Meteo | Temperature profile along route | Free API, no key required |
+| `data/reference/costs.csv` | APMC commission + cess rates by state | Manually sourced from state APMC rules |
 
 ---
 
@@ -106,41 +88,29 @@ python -m backend.cli daily \
 
 ```
 practicum/
-├── buildplan.md              # Full plan — source of truth for scope
-├── CLAUDE.md                 # Session orientation for Claude
-├── PROGRESS.md               # Append-only log of shipped work
-├── TODO.md                   # Phase-by-phase backlog
-├── docker-compose.yml        # Postgres + TimescaleDB (OSRM added in Phase 2)
-├── .env.example              # Secret template
 ├── backend/
-│   ├── pyproject.toml
-│   ├── config/               # pydantic-settings env loader
-│   ├── db/
-│   │   ├── connection.py     # SQLAlchemy engine + session scope
-│   │   ├── migrate.py        # Plain-SQL migration runner
-│   │   └── migrations/       # 001…004
-│   ├── ingestion/
-│   │   ├── agmarknet_client.py   # Retrying wrapper around the SDK
-│   │   ├── normalize.py          # Column aliasing, date parsing, dedupe
-│   │   ├── upsert.py             # Auto-registering upsert into panel
-│   │   ├── backfill.py           # Year-chunked, resumable historical pull
-│   │   ├── daily.py              # Incremental N-day pull
-│   │   └── quality.py            # Reporting-density + anomaly report
-│   └── cli.py                # typer CLI: migrate | backfill | daily | quality
+│   ├── api/            FastAPI app + routers
+│   ├── analysis/       Market intelligence (price stats, seasonal index)
+│   ├── cost/           Freight + APMC cost model
+│   ├── decision/       Spoilage-aware mandi ranker
+│   ├── ingestion/      Agmarknet client, normalize, upsert, backfill
+│   └── db/             Migrations + SQLAlchemy engine
+├── frontend/           Next.js 15 App Router dashboard
 ├── data/
-│   ├── raw/                  # Agmarknet dumps (gitignored)
-│   ├── processed/            # Cleaned snapshots (gitignored)
-│   └── reference/            # Versioned reference tables (shelf life, costs, geocodes)
-├── docs/                     # Quality reports, phase writeups
-└── scripts/                  # Ops one-offs
+│   ├── raw/            Agmarknet dumps (gitignored)
+│   ├── processed/      Cleaned snapshots + seasonal index (gitignored)
+│   └── reference/      Versioned CSV tables (shelf life, costs, geocodes)
+└── docs/               Proposal, tech-stack rationale, quality reports
 ```
 
 ---
 
 ## Team
 
-- **Rubrangso** — full-stack + infra (ingestion, freshness engine, API, dashboard, deploy)
-- **Monish** — AI/ML (backtest harness, LightGBM forecasters, seasonal index, abstention)
-- **Tanishq** — management/ops (cost model, field interviews, business case)
+| Person | Role |
+|--------|------|
+| Rubrangso | Full-stack + infra (ingestion, freshness, API, dashboard) |
+| Monish | AI/ML (backtest harness, LightGBM forecasters, seasonal index) |
+| Tanishq | Management/ops (cost model, field interviews, business case) |
 
-Owner map and per-phase deliverables are in `TODO.md`.
+See [`PROGRESS.md`](./PROGRESS.md) for what's shipped and [`TODO.md`](./TODO.md) for what's next.

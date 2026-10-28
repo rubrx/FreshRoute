@@ -28,6 +28,12 @@ export default async function ArbitragePage({
           <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">
             The gap between the highest and lowest mandi, within each state, today.
           </p>
+          <p className="mt-2 max-w-xl text-xs text-[color:var(--color-fg-dim)]">
+            A spread is only worth acting on if it exceeds your freight cost.
+            The <span className="font-medium text-[color:var(--color-fg-muted)]">est. net spread</span> column
+            subtracts an indicative ₹4/km/tonne × 150 km (≈ ₹60/qtl) as a rough freight proxy — consult
+            your transporter for a real quote before acting.
+          </p>
         </div>
         <FilterRow active={commodity} />
       </div>
@@ -64,9 +70,24 @@ export default async function ArbitragePage({
                   <span className="tabular text-lg font-semibold text-[color:var(--color-accent)]">
                     +{formatNumber(row.spread_pct, 1)}%
                   </span>
-                  <span className="text-xs tabular text-[color:var(--color-fg-muted)]">
-                    {formatINR(row.spread_rs_per_quintal)} / qtl
-                  </span>
+                  <div className="space-y-0.5">
+                    <div className="text-xs tabular text-[color:var(--color-fg-muted)]">
+                      {formatINR(row.spread_rs_per_quintal)} / qtl gross
+                    </div>
+                    {(() => {
+                      const netSpread = row.spread_rs_per_quintal - 60;
+                      return (
+                        <div className={[
+                          "text-xs tabular font-medium",
+                          netSpread > 0
+                            ? "text-[color:var(--color-success)]"
+                            : "text-[color:var(--color-danger)]",
+                        ].join(" ")}>
+                          {netSpread > 0 ? "+" : ""}{formatINR(netSpread)} / qtl net est.
+                        </div>
+                      );
+                    })()}
+                  </div>
                   <Link
                     href={`/mandis?commodity=${encodeURIComponent(row.commodity)}&state=${encodeURIComponent(row.state)}`}
                     className="inline-flex items-center gap-1 text-[11px] text-[color:var(--color-fg-muted)] transition-colors hover:text-[color:var(--color-fg)]"

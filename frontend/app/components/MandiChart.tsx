@@ -1,6 +1,15 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 // Tokens duplicated as literals — Recharts sets SVG attributes at render
 // and cannot read CSS custom properties.
@@ -11,27 +20,31 @@ const BAR   = "oklch(59% 0.149 163)";
 const HOVER = "oklch(95% 0.003 270 / 0.6)";
 const PANEL = "oklch(99% 0.002 270)";
 const INK   = "oklch(18% 0.006 270)";
+const MED   = "oklch(62% 0.17 30)";
 
 type Row = { market: string; district: string; modal_price: number };
 
 type Props = {
   rows: Row[];
+  nationalMedian?: number;
 };
 
-export function MandiChart({ rows }: Props) {
-  const data = rows.slice(0, 15).map((r) => ({
+export function MandiChart({ rows, nationalMedian }: Props) {
+  const data = rows.slice(0, 30).map((r) => ({
     label: r.market,
     tooltip: `${r.market} · ${r.district}`,
     price: r.modal_price,
   }));
 
+  const height = Math.max(380, data.length * 24 + 40);
+
   return (
-    <div className="h-[420px] w-full">
+    <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 8, right: 24, bottom: 8, left: 32 }}
+          margin={{ top: 8, right: 96, bottom: 8, left: 32 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
           <XAxis
@@ -65,6 +78,20 @@ export function MandiChart({ rows }: Props) {
             }
           />
           <Bar dataKey="price" fill={BAR} radius={[0, 4, 4, 0]} />
+          {nationalMedian != null && (
+            <ReferenceLine
+              x={nationalMedian}
+              stroke={MED}
+              strokeDasharray="5 3"
+              strokeWidth={2}
+              label={{
+                value: `₹${Math.round(nationalMedian).toLocaleString("en-IN")} nat. med`,
+                position: "insideTopRight",
+                fill: MED,
+                fontSize: 10,
+              }}
+            />
+          )}
         </BarChart>
       </ResponsiveContainer>
     </div>

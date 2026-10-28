@@ -6,6 +6,17 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { Panel } from "@/app/components/Panel";
 import { fetchCostEstimate, formatINR, type CostEstimate } from "@/app/lib/api";
 
+// Segment colors for the stacked bar — deductions then net
+const SEG_COLORS = [
+  "oklch(62% 0.17 30)",
+  "oklch(68% 0.16 50)",
+  "oklch(58% 0.14 300)",
+  "oklch(57% 0.13 340)",
+  "oklch(62% 0.11 220)",
+  "oklch(58% 0.09 180)",
+  "oklch(62% 0.09 270)",
+];
+
 type FormState = {
   quote: string;
   quantity: string;
@@ -34,6 +45,7 @@ export function EstimatorForm({ supportedStates }: Props) {
       : supportedStates[0] ?? INITIAL.state,
   }));
   const [result, setResult] = useState<CostEstimate | null>(null);
+  const [localResult, setLocalResult] = useState<CostEstimate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -69,11 +81,18 @@ export function EstimatorForm({ supportedStates }: Props) {
 
     startTransition(async () => {
       try {
-        const estimate = await fetchCostEstimate(parsed);
+        const [estimate, local] = await Promise.all([
+          fetchCostEstimate(parsed),
+          parsed.distanceKm > 0
+            ? fetchCostEstimate({ ...parsed, distanceKm: 0 })
+            : Promise.resolve(null),
+        ]);
         setResult(estimate);
+        setLocalResult(local);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Unknown error");
         setResult(null);
+        setLocalResult(null);
       }
     });
   }
@@ -150,7 +169,7 @@ export function EstimatorForm({ supportedStates }: Props) {
 
       <div>
         {result ? (
-          <ResultView result={result} />
+          <ResultView result={result} localResult={localResult} />
         ) : (
           <Panel className="flex h-full min-h-[420px] items-center justify-center p-8 text-center text-sm text-[color:var(--color-fg-muted)]">
             The breakdown will appear here.
@@ -197,27 +216,80 @@ function NumberField({
   );
 }
 
-function ResultView({ result }: { result: CostEstimate }) {
+function ResultView({
+  result,
+  localResult,
+}: {
+  result: CostEstimate;
+  localResult: CostEstimate | null;
+}) {
   const deductionPct = (result.total_deductions_rs / result.gross_revenue_rs) * 100;
-  return (
-    <Panel className="p-6">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
-        Net revenue
-      </div>
-      <div className="mt-2 flex items-baseline gap-3">
-        <span className="text-4xl font-bold tabular text-[color:var(--color-fg)]">
-          {formatINR(result.net_revenue_rs)}
-        </span>
-        <span className="text-sm tabular text-[color:var(--color-fg-muted)]">
-          {formatINR(result.net_rs_per_tonne)} / tonne
-        </span>
-      </div>
-      <p className="mt-2 text-xs text-[color:var(--color-fg-muted)]">
-        {result.truck_size_tonnes}-t truck to {result.dest_state} ·{" "}
-        {result.distance_km.toLocaleString("en-IN")} km · diesel ₹{result.diesel_price_rs_per_l}/L
-      </p>
 
-      <div className="mt-8">
+  return (
+    <Panel className="p-6 space-y-8">
+      {/* Net headline */}
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
+          Net revenue
+        </div>
+        <div className="mt-2 flex items-baseline gap-3">
+          <span className="text-4xl font-bold tabular text-[color:var(--color-fg)]">
+            {formatINR(result.net_revenue_rs)}
+          </span>
+          <span className="text-sm tabular text-[color:var(--color-fg-muted)]">
+            {formatINR(result.net_rs_per_tonne)} / tonne
+          </span>
+        </div>
+        <p className="mt-2 text-xs text-[color:var(--color-fg-muted)]">
+          {result.truck_size_tonnes}-t truck to {result.dest_state} ·{" "}
+          {result.distance_km.toLocaleString("en-IN")} km · diesel ₹
+          {result.diesel_price_rs_per_l}/L
+        </p>
+      </div>
+
+      {/* Stacked composition bar */}
+      <div>
+        <div className="mb-2 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
+          Revenue composition
+        </div>
+        <div className="flex h-7 overflow-hidden rounded-lg">
+          {result.deductions.map((d, i) => (
+            <div
+              key={d.label}
+              style={{
+                width: `${(d.amount_rs / result.gross_revenue_rs) * 100}%`,
+                background: SEG_COLORS[i % SEG_COLORS.length],
+              }}
+              title={`${d.label}: ${formatINR(d.amount_rs)}`}
+            />
+          ))}
+          <div
+            style={{ width: `${(result.net_revenue_rs / result.gross_revenue_rs) * 100}%` }}
+            className="bg-[color:var(--color-success)]"
+            title={`Net: ${formatINR(result.net_revenue_rs)}`}
+          />
+        </div>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {result.deductions.map((d, i) => (
+            <div key={d.label} className="flex items-center gap-1.5">
+              <div
+                className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                style={{ background: SEG_COLORS[i % SEG_COLORS.length] }}
+              />
+              <span className="text-[11px] text-[color:var(--color-fg-muted)]">{d.label}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-sm bg-[color:var(--color-success)]" />
+            <span className="text-[11px] font-medium text-[color:var(--color-fg)]">
+              Net ({(100 - deductionPct).toFixed(0)}%)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Deduction detail */}
+      <div>
         <div className="mb-3 flex items-baseline justify-between">
           <span className="text-xs uppercase tracking-wider text-[color:var(--color-fg-dim)]">
             Gross revenue
@@ -227,7 +299,7 @@ function ResultView({ result }: { result: CostEstimate }) {
           </span>
         </div>
         <div className="space-y-2">
-          {result.deductions.map((d) => {
+          {result.deductions.map((d, i) => {
             const pctOfGross = (d.amount_rs / result.gross_revenue_rs) * 100;
             return (
               <div key={d.label}>
@@ -239,8 +311,11 @@ function ResultView({ result }: { result: CostEstimate }) {
                 </div>
                 <div className="h-[3px] w-full overflow-hidden rounded-full bg-[color:var(--color-line-soft)]">
                   <div
-                    className="h-full bg-[color:var(--color-accent)]/70"
-                    style={{ width: `${Math.min(100, pctOfGross)}%` }}
+                    className="h-full"
+                    style={{
+                      width: `${Math.min(100, pctOfGross)}%`,
+                      background: SEG_COLORS[i % SEG_COLORS.length],
+                    }}
                   />
                 </div>
               </div>
@@ -259,6 +334,39 @@ function ResultView({ result }: { result: CostEstimate }) {
           </span>
         </div>
       </div>
+
+      {/* Compared to staying local */}
+      {localResult && (
+        <div className="rounded-xl border border-[color:var(--color-line-soft)] bg-[color:var(--color-bg-elev-2)] px-4 py-4">
+          <div className="mb-3 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
+            Compared to staying local (0 km)
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-[color:var(--color-fg-muted)]">Local net</span>
+              <span className="tabular font-medium text-[color:var(--color-fg)]">
+                {formatINR(localResult.net_rs_per_tonne)} / t
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-[color:var(--color-fg-muted)]">
+                This route ({result.distance_km.toLocaleString("en-IN")} km)
+              </span>
+              <span className="tabular font-medium text-[color:var(--color-fg)]">
+                {formatINR(result.net_rs_per_tonne)} / t
+              </span>
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline justify-between border-t border-[color:var(--color-line-soft)] pt-3">
+            <span className="text-xs font-medium text-[color:var(--color-fg-muted)]">
+              Freight cost per tonne
+            </span>
+            <span className="tabular text-sm font-semibold text-[color:var(--color-danger)]">
+              − {formatINR(localResult.net_rs_per_tonne - result.net_rs_per_tonne)} / t
+            </span>
+          </div>
+        </div>
+      )}
     </Panel>
   );
 }

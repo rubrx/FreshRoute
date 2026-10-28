@@ -71,7 +71,41 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
               /tonne
             </span>
           </div>
+          {/* Gross → net delta */}
+          <div className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
+            from{" "}
+            <span className="tabular font-medium text-[color:var(--color-fg)]">
+              {formatINR(item.modal_price_rs_per_quintal * 10)}
+            </span>{" "}
+            gross —{" "}
+            <span className="tabular text-[color:var(--color-danger)]">
+              {formatINR(item.costs.total_deductions_rs / item.gross_revenue_rs * item.modal_price_rs_per_quintal * 10)}
+            </span>{" "}
+            lost to costs
+          </div>
         </div>
+
+        {/* Price context badges */}
+        {(item.price_pct_rank_in_state > 0 || item.vs_state_median_rs_per_qtl !== 0) && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {item.price_pct_rank_in_state >= 75 && (
+              <span className="rounded-full bg-[color:var(--color-accent-soft)] px-2.5 py-0.5 text-[11px] font-medium text-[color:var(--color-accent)]">
+                Top {Math.max(1, Math.round(100 - item.price_pct_rank_in_state) + 1)}% price in {item.state}
+              </span>
+            )}
+            {item.vs_state_median_rs_per_qtl !== 0 && (
+              <span className={[
+                "rounded-full px-2.5 py-0.5 text-[11px] font-medium tabular",
+                item.vs_state_median_rs_per_qtl >= 0
+                  ? "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]"
+                  : "bg-[color:var(--color-danger)]/10 text-[color:var(--color-danger)]",
+              ].join(" ")}>
+                {item.vs_state_median_rs_per_qtl >= 0 ? "+" : ""}
+                {formatINR(item.vs_state_median_rs_per_qtl)} vs {item.state} median
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Metadata strip */}
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[color:var(--color-fg-muted)]">

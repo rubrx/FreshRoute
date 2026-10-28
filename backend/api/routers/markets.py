@@ -1,4 +1,10 @@
-"""Market data endpoints — arbitrage, per-mandi prices, and facet lookups."""
+"""Market data endpoints — arbitrage spreads, per-mandi prices, and facet lookups.
+
+Endpoints:
+    GET /markets/facets       Distinct commodities and states in the current snapshot.
+    GET /markets/arbitrage    Ranked intra-state spreads (high − low mandi within a state).
+    GET /markets/prices       Per-mandi modal/min/max for a commodity, sorted by price desc.
+"""
 
 from __future__ import annotations
 

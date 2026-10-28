@@ -24,11 +24,12 @@ export default async function EstimatePage() {
     <div className="mx-auto max-w-5xl px-6 pt-20 pb-24">
       <div className="mb-10">
         <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em] text-[color:var(--color-fg)]">
-          What does a shipment earn?
+          Cost Calculator
         </h1>
         <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">
-          Enter a destination quote and consignment details. Net revenue after
-          freight, commission, cess, entry fee, labour, and weighment.
+          Enter a destination quote and consignment details to see your net
+          after freight, APMC commission, cess, entry fee, labour, and
+          weighment — plus a side-by-side vs. selling locally.
         </p>
       </div>
       <EstimatorForm supportedStates={supported} />

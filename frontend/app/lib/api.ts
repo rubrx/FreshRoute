@@ -185,6 +185,9 @@ export type RecommendItem = {
   why: string;
   costs: RecommendCostBreakdown;
   spoilage: RecommendSpoilage;
+  price_pct_rank_in_state: number;
+  vs_state_median_rs_per_qtl: number;
+  vs_national_median_rs_per_qtl: number;
 };
 
 export type RecommendInfeasible = {
@@ -210,6 +213,48 @@ export type RecommendResponse = {
   caveats: string[];
   infeasible: RecommendInfeasible[];
   ranked: RecommendItem[];
+  nearest_mandi: RecommendItem | null;
+};
+
+export type CommodityOverviewItem = {
+  commodity: string;
+  national_median: number;
+  national_max: number;
+  mandis_count: number;
+  best_state: string;
+  best_state_median: number;
+};
+
+export type CommodityOverviewResponse = {
+  snapshot_date: string | null;
+  commodities: CommodityOverviewItem[];
+};
+
+export type DistrictRow = {
+  district: string;
+  lat: number;
+  lon: number;
+};
+
+export type DistrictsResponse = {
+  state: string;
+  count: number;
+  districts: DistrictRow[];
+};
+
+export type SeasonalWeek = {
+  iso_week: number;
+  arrival_index: number;
+  label: "glut" | "lean" | "normal";
+};
+
+export type SeasonalResponse = {
+  available: boolean;
+  reason: string | null;
+  commodity: string | null;
+  state: string | null;
+  current_week: number | null;
+  weeks: SeasonalWeek[];
 };
 
 export function fetchRecommend(params: {
@@ -231,6 +276,25 @@ export function fetchRecommend(params: {
   });
   if (params.radiusKm) qs.set("radius_km", String(params.radiusKm));
   return get<RecommendResponse>(`/recommend?${qs}`);
+}
+
+export function fetchCommodityOverview(): Promise<CommodityOverviewResponse> {
+  return get<CommodityOverviewResponse>("/intel/commodity-overview");
+}
+
+export function fetchGeoDistricts(state: string): Promise<DistrictsResponse> {
+  return get<DistrictsResponse>(
+    `/geo/districts?${new URLSearchParams({ state })}`
+  );
+}
+
+export function fetchSeasonal(
+  commodity: string,
+  state: string
+): Promise<SeasonalResponse> {
+  return get<SeasonalResponse>(
+    `/intel/seasonal?${new URLSearchParams({ commodity, state })}`
+  );
 }
 
 export const formatINR = (rs: number): string =>
