@@ -1,4 +1,4 @@
-import { Leaf } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -9,8 +9,13 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2">
-              <Leaf size={16} className="text-[color:var(--color-accent)]" aria-hidden="true" />
-              <span className="font-semibold text-[color:var(--color-fg)]">FreshRoute</span>
+              <Image
+                src="/logo.jpg"
+                alt="FreshRoute"
+                width={100}
+                height={30}
+                className="h-7 w-auto object-contain"
+              />
             </div>
             <p className="mt-2 max-w-[260px] text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
               Mandi routing for Indian farmers. Ranked by what you actually
