@@ -1,23 +1,6 @@
-"""Vehicle catalogue for the recommender.
+"""Vehicle catalogue — capacity, mileage, speed, and insulation for freight + spoilage math.
 
-Every vehicle carries four attributes that materially change the answer
-to "where should I send my tomatoes?":
-
-- ``capacity_tonnes`` — feeds the trips×freight math.
-- ``mileage_kmpl`` — feeds a **first-principles** fuel-cost line:
-      fuel_litres = distance / mileage
-      fuel_cost   = fuel_litres × diesel_price
-  Explicit and readable in the UI, so a farmer can sanity-check it.
-- ``avg_speed_kmph`` — feeds the transit-hours estimate that drives
-  the spoilage integrator. A tractor at 25 km/h consumes far more of
-  the shelf-life budget than a truck at 55 km/h.
-- ``insulation`` — categorical multiplier on ambient temperature.
-  An open tractor rides at ambient. A tarped pickup shades the load
-  by a few degrees. A refrigerated truck delivers near-optimum
-  storage temperature.
-
-All numbers are seed values documented in ``notes`` — Tanishq will
-replace them with quotations from live traders in Phase 7.
+Seed values; Tanishq will update from live trader quotes in Phase 7.
 """
 
 from __future__ import annotations

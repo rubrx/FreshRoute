@@ -1,14 +1,7 @@
-"""Cost model v1 — the ranker's objective function.
+"""Cost model — converts a mandi quote (₹/quintal) to net realization (₹/tonne).
 
-Turns a mandi quote (₹/quintal) into an itemized net realization (₹/tonne)
-after freight, APMC commission, cess, entry fee, labour, and weighment.
-
-All figures are seed values (see `data/reference/costs.csv` and
-`data/reference/freight.csv`) — Tanishq refines them in Phase 7 field
-interviews. The model itself never changes; only the reference CSVs do.
-
-Units are explicit in every field name to prevent the ₹/quintal ↔ ₹/tonne
-confusion that will otherwise silently corrupt the ranker.
+Seed values in data/reference/costs.csv and freight.csv. Units baked into field names
+to avoid the ₹/quintal ↔ ₹/tonne confusion.
 """
 
 from __future__ import annotations
@@ -51,11 +44,7 @@ class FreightSpec:
 
 @dataclass(frozen=True)
 class CostBreakdown:
-    """Every line item is in ₹, at the whole-consignment level unless suffixed.
-
-    Sum of the deductions equals `gross_revenue - net_revenue`. Divide any
-    field by `quantity_tonnes` for per-tonne figures.
-    """
+    """All amounts in ₹ for the whole consignment. Divide by quantity_tonnes for per-tonne."""
     # Inputs echoed back for the UI
     quote_price_rs_per_quintal: float
     quantity_tonnes: float

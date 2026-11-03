@@ -1,15 +1,7 @@
 #!/usr/bin/env bash
-# osrm_bootstrap.sh — one-time OSRM preprocessing for the India OSM extract.
-#
-# Downloads the Geofabrik India extract (~1.4 GB), runs the OSRM MLD pipeline
-# (extract → partition → customize), and leaves ready-to-serve artifacts in
-# ./data/osrm/.
-#
-# After this succeeds, `docker compose --profile osrm up -d osrm` serves
-# routes at http://localhost:5000.
-#
-# Prereqs: docker (compose v2), curl, ~10 GB free disk, ~30–60 min on a
-# broadband connection + decent laptop.
+# One-time OSRM preprocessing — downloads Geofabrik India (~1.4 GB), runs extract → partition → customize.
+# Needs: docker (compose v2), curl, ~10 GB disk, ~30–60 min.
+# After this succeeds: docker compose --profile osrm up -d osrm
 
 set -euo pipefail
 

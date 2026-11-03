@@ -24,9 +24,12 @@ const VEHICLES = [
 ] as const;
 
 const STATES = [
-  "Maharashtra", "Karnataka", "Uttar Pradesh", "Punjab",
-  "Haryana", "Delhi", "Gujarat", "West Bengal",
-  "Andhra Pradesh", "Tamil Nadu", "Madhya Pradesh", "Rajasthan",
+  "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Delhi", "Gujarat", "Haryana", "Himachal Pradesh",
+  "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+  "Maharashtra", "Meghalaya", "Odisha", "Punjab",
+  "Rajasthan", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal",
 ] as const;
 
 type FormState = {
@@ -440,7 +443,7 @@ export function RecommendForm() {
           ) : (
             <div className="space-y-3">
               {result.ranked.map((item, i) => (
-                <RecommendCard key={item.market_id} item={item} defaultExpanded={i === 0} />
+                <RecommendCard key={item.market_id} item={item} quantityTonnes={result.quantity_tonnes} defaultExpanded={i === 0} />
               ))}
             </div>
           )}

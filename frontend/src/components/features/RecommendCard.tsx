@@ -11,6 +11,7 @@ import { SpoilageChip } from "./SpoilageChip";
 
 type Props = {
   item: RecommendItem;
+  quantityTonnes?: number;
   defaultExpanded?: boolean;
 };
 
@@ -20,7 +21,7 @@ function borderColor(fraction: number): string {
   return "border-l-[color:var(--color-danger)]";
 }
 
-export function RecommendCard({ item, defaultExpanded = false }: Props) {
+export function RecommendCard({ item, quantityTonnes, defaultExpanded = false }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const spoilageLoss = item.gross_revenue_rs - item.expected_saleable_revenue_rs;
@@ -82,6 +83,14 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
             </span>{" "}
             lost to costs
           </div>
+          {quantityTonnes && (
+            <div className="mt-1 text-xs text-[color:var(--color-fg-dim)]">
+              <span className="tabular font-medium text-[color:var(--color-fg-muted)]">
+                {formatINR(item.net_revenue_rs)}
+              </span>{" "}
+              total for {quantityTonnes} t
+            </div>
+          )}
         </div>
 
         {/* Price context badges */}

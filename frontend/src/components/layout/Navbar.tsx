@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Leaf, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/",          label: "Home" },
@@ -16,18 +17,15 @@ export function Navbar() {
 
         {/* Logo + nav */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)]">
-              <Leaf size={18} className="text-[color:var(--color-accent)]" aria-hidden="true" />
-            </div>
-            <div className="leading-none">
-              <div className="text-[17px] font-semibold text-[color:var(--color-accent)] leading-tight tracking-tight">
-                FreshRoute
-              </div>
-              <div className="text-[10px] text-[color:var(--color-fg-dim)] tracking-wide">
-                Kisan Ka Saathi
-              </div>
-            </div>
+          <Link href="/" className="shrink-0">
+            <Image
+              src="/logo.jpg"
+              alt="FreshRoute"
+              width={120}
+              height={36}
+              className="h-9 w-auto object-contain"
+              priority
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-0.5" aria-label="Main navigation">

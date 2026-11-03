@@ -1,22 +1,6 @@
-"""Estimated in-transit spoilage.
+"""Q10-based spoilage estimate from USDA AH-66 shelf-life data.
 
-This is a first-principles heuristic on top of the USDA AH-66 shelf-life
-table (see ``data/reference/shelf_life.csv``). It is NOT a trained ML
-model — Phase 4 will replace the ambient-temperature assumption with
-an Open-Meteo hourly profile sampled along the OSRM polyline. Until
-that lands, this module is honest about being an estimate:
-
-    fraction_of_shelf_life_used = transit_hours / SL_at_transit_temp
-    SL_at_transit_temp          = SL_opt * Q10 ^ ((T_opt - T_transit) / 10)
-    spoilage_fraction           = clamp(fraction_of_shelf_life_used * dwell_factor, 0, 1)
-
-where:
-- ``dwell_factor`` (default 1.35) tacks on typical mandi-arrival dwell
-  before sale, so the number reflects "how much of the produce arrives
-  unsellable", not "how much is bruised on the road".
-- ``T_transit`` is (ambient - vehicle.ambient_temp_shading_c),
-  clipped up to the commodity's chilling-injury floor so a reefer
-  doesn't get credit for freezing the produce.
+Phase 4 will replace the ambient-temp assumption with an Open-Meteo profile along the OSRM polyline.
 """
 
 from __future__ import annotations

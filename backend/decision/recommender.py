@@ -1,36 +1,6 @@
-"""End-to-end mandi recommender.
+"""Ranks mandis by expected net ₹/tonne after spoilage, freight, and mandi charges.
 
-Answers one question:
-
-    "I have <quantity> tonnes of <commodity> to sell.
-     Where and when should I send them so I make the most money
-     without the produce becoming unsellable?"
-
-Given (origin lat/lon, commodity, quantity, vehicle, diesel price):
-
-1. Pull the latest reported modal price at every mandi trading this
-   commodity today.
-2. Resolve each mandi to a district-centroid lat/lon (or state
-   centroid as fallback, tagged as an approximation).
-3. Compute great-circle × road-detour distance; drop anything outside
-   the search radius (default 250 km).
-4. Estimate transit hours from the vehicle's average speed, expected
-   fuel litres + rupees from mileage, and other freight components
-   from the seed rate table.
-5. Estimate spoilage from the shelf-life table using a Q10 model at
-   the effective transit temperature (ambient - vehicle shading).
-6. Apply the mandi's APMC / cess / entry-fee / labour / weighment
-   deductions from ``data/reference/costs.csv``.
-7. Rank by **expected net realization per tonne**:
-       gross    = quote × quantity × (1 - spoilage)
-       net      = gross - fuel - other_freight - APMC - cess - entry
-                       - labour - weighment
-       per_t    = net / quantity
-8. Drop any destination whose spoilage exceeds a feasibility floor;
-   surface the reason so the UI can explain why it was excluded.
-
-No forecasting yet — Phase 3 will replace ``quote`` with a P50
-price forecast for the arrival day.
+Phase 3 will swap the live quote for a P50 price forecast.
 """
 
 from __future__ import annotations
@@ -221,8 +191,6 @@ def recommend(
 
     snapshot_date: date | None = raw[0]["snapshot_date"] if raw else None
 
-    # Price context map: market_id → percentile rank + vs-median signals.
-    # Built once, O(N) over the snapshot — cheap relative to the loop.
     context_map = build_market_context_map(db, commodity)
 
     considered = 0
@@ -232,11 +200,7 @@ def recommend(
     for row in raw:
         centroid: Centroid | None = resolve_centroid(row["state"], row["district"])
         if centroid is None:
-            # Silently skip mandis we cannot place on the map. Alternative:
-            # surface them as infeasible with reason "no coordinates". The
-            # current district+state coverage catches most volume; will
-            # revisit once real geocoding runs.
-            continue
+            continue  # no coordinates — skip silently; coverage handles most volume
 
         distance = estimated_road_km(
             origin_lat, origin_lon, centroid.latitude, centroid.longitude
@@ -246,7 +210,6 @@ def recommend(
 
         considered += 1
 
-        # Cost rates keyed on state (seed table); skip if we don't have rates.
         rates = state_costs.get(row["state"])
         if rates is None:
             infeasible.append(
