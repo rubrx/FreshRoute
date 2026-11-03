@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Noto_Sans_Devanagari } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { BottomNav } from "@/components/features/BottomNav";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,7 +41,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
-        <BottomNav />
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Loader2, MapPin, Navigation, Share2 } from "lucide-react";
+import { CheckCircle, Loader2, MapPin, Navigation, Share2 } from "lucide-react";
 import { RecommendCard } from "@/components/features/RecommendCard";
 import { LoadingCard } from "@/components/ui/LoadingCard";
 import {
@@ -16,11 +16,11 @@ const COMMODITIES = ["Tomato", "Onion", "Potato", "Banana"] as const;
 type Commodity = (typeof COMMODITIES)[number];
 
 const VEHICLES = [
-  { key: "tractor_trolley", label: "Tractor trolley",    caption: "~5 t" },
-  { key: "pickup",          label: "Pickup",             caption: "~1 t" },
-  { key: "truck_small",     label: "Small truck",        caption: "~5 t" },
-  { key: "truck_medium",    label: "Medium truck",       caption: "~10 t" },
-  { key: "reefer",          label: "Reefer",             caption: "~10 t · cold" },
+  { key: "tractor_trolley", label: "Tractor trolley", caption: "~5 t" },
+  { key: "pickup",          label: "Pickup",          caption: "~1 t" },
+  { key: "truck_small",     label: "Small truck",     caption: "~5 t" },
+  { key: "truck_medium",    label: "Medium truck",    caption: "~10 t" },
+  { key: "reefer",          label: "Reefer",          caption: "~10 t · cold" },
 ] as const;
 
 const STATES = [
@@ -33,6 +33,7 @@ type FormState = {
   commodity: Commodity;
   lat: string;
   lon: string;
+  locationLabel: string;
   quantity: string;
   vehicle: string;
   diesel: string;
@@ -42,6 +43,7 @@ const DEFAULT: FormState = {
   commodity: "Tomato",
   lat: "",
   lon: "",
+  locationLabel: "",
   quantity: "5",
   vehicle: "truck_small",
   diesel: "95",
@@ -53,17 +55,11 @@ type FieldError = Partial<Record<keyof FormState, string>>;
 
 function validate(f: FormState): FieldError {
   const errs: FieldError = {};
-  const lat = parseFloat(f.lat);
-  const lon = parseFloat(f.lon);
   const qty = parseFloat(f.quantity);
   const diesel = parseFloat(f.diesel);
 
-  if (!f.lat || isNaN(lat) || lat < 6 || lat > 37)
-    errs.lat = "Enter a valid Indian latitude (6–37)";
-  if (!f.lon || isNaN(lon) || lon < 68 || lon > 97)
-    errs.lon = "Enter a valid Indian longitude (68–97)";
-  if (!f.quantity || isNaN(qty) || qty <= 0)
-    errs.quantity = "Enter a quantity > 0";
+  if (!f.lat || !f.lon) errs.lat = "Please share your location above";
+  if (!f.quantity || isNaN(qty) || qty <= 0) errs.quantity = "Enter a quantity > 0";
   if (!f.diesel || isNaN(diesel) || diesel < 50 || diesel > 200)
     errs.diesel = "Enter diesel price between ₹50–₹200/L";
   return errs;
@@ -75,8 +71,8 @@ export function RecommendForm() {
       const saved = localStorage.getItem(LS_KEY);
       if (saved) {
         try {
-          const { lat, lon } = JSON.parse(saved);
-          return { ...DEFAULT, lat, lon };
+          const parsed = JSON.parse(saved);
+          return { ...DEFAULT, ...parsed };
         } catch { /* ignore */ }
       }
     }
@@ -88,37 +84,42 @@ export function RecommendForm() {
   const [locating, setLocating] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const [gpsDenied, setGpsDenied] = useState(false);
   const [selectedState, setSelectedState] = useState("");
   const [districts, setDistricts] = useState<DistrictRow[]>([]);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+
+  const locationSet = !!form.lat && !!form.lon;
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
   }
 
-  function useGps() {
-    if (!navigator.geolocation) {
-      setGpsDenied(true);
-      return;
+  function setLocation(lat: string, lon: string, label: string) {
+    setForm((prev) => ({ ...prev, lat, lon, locationLabel: label }));
+    setErrors((prev) => ({ ...prev, lat: undefined }));
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LS_KEY, JSON.stringify({ lat, lon, locationLabel: label }));
     }
+  }
+
+  function requestGps() {
+    if (!navigator.geolocation) { setShowManual(true); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = pos.coords.latitude.toFixed(5);
-        const lon = pos.coords.longitude.toFixed(5);
-        set("lat", lat);
-        set("lon", lon);
         setLocating(false);
-        setGpsDenied(false);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(LS_KEY, JSON.stringify({ lat, lon }));
-        }
+        setShowManual(false);
+        setLocation(
+          pos.coords.latitude.toFixed(5),
+          pos.coords.longitude.toFixed(5),
+          "Your GPS location",
+        );
       },
       () => {
         setLocating(false);
-        setGpsDenied(true);
+        setShowManual(true);
       },
     );
   }
@@ -133,14 +134,11 @@ export function RecommendForm() {
   }, [selectedState]);
 
   function pickDistrict(district: DistrictRow) {
-    set("lat", district.lat.toFixed(5));
-    set("lon", district.lon.toFixed(5));
-    if (typeof window !== "undefined") {
-      localStorage.setItem(LS_KEY, JSON.stringify({
-        lat: district.lat.toFixed(5),
-        lon: district.lon.toFixed(5),
-      }));
-    }
+    setLocation(
+      district.lat.toFixed(5),
+      district.lon.toFixed(5),
+      `${district.district}, ${selectedState}`,
+    );
   }
 
   function shareResult() {
@@ -158,10 +156,7 @@ export function RecommendForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validate(form);
-    if (Object.keys(errs).length) {
-      setErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length) { setErrors(errs); return; }
     setApiError(null);
     startTransition(async () => {
       try {
@@ -182,21 +177,15 @@ export function RecommendForm() {
 
   const nearest = result?.nearest_mandi;
   const top = result?.ranked[0];
-  const showSavings =
-    nearest && top && nearest.market_id !== top.market_id;
-  const savingsPerTonne = showSavings
-    ? top!.net_rs_per_tonne - nearest!.net_rs_per_tonne
-    : 0;
-  const savingsTotal = showSavings && result
-    ? savingsPerTonne * result.quantity_tonnes
-    : 0;
+  const showSavings = nearest && top && nearest.market_id !== top.market_id;
+  const savingsPerTonne = showSavings ? top!.net_rs_per_tonne - nearest!.net_rs_per_tonne : 0;
+  const savingsTotal = showSavings && result ? savingsPerTonne * result.quantity_tonnes : 0;
 
   return (
     <div className="space-y-8">
-      {/* ── Form ─────────────────────────────────────────────────── */}
-      <form onSubmit={submit} noValidate className="space-y-5">
+      <form onSubmit={submit} noValidate className="space-y-6">
 
-        {/* Commodity */}
+        {/* ── Commodity ─────────────────────────────────────────── */}
         <fieldset>
           <legend className="mb-2 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
             Commodity
@@ -220,73 +209,67 @@ export function RecommendForm() {
           </div>
         </fieldset>
 
-        {/* Location */}
+        {/* ── Location ──────────────────────────────────────────── */}
         <fieldset>
-          <legend className="mb-2 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
+          <legend className="mb-3 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
             Your location
           </legend>
-          <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-            <div>
-              <input
-                type="number"
-                step="any"
-                placeholder="Latitude"
-                value={form.lat}
-                onChange={(e) => set("lat", e.target.value)}
-                aria-label="Latitude"
-                aria-invalid={!!errors.lat}
-                className={inputCls(!!errors.lat)}
-              />
-              {errors.lat && <p className="mt-1 text-[11px] text-[color:var(--color-danger)]">{errors.lat}</p>}
-            </div>
-            <div>
-              <input
-                type="number"
-                step="any"
-                placeholder="Longitude"
-                value={form.lon}
-                onChange={(e) => set("lon", e.target.value)}
-                aria-label="Longitude"
-                aria-invalid={!!errors.lon}
-                className={inputCls(!!errors.lon)}
-              />
-              {errors.lon && <p className="mt-1 text-[11px] text-[color:var(--color-danger)]">{errors.lon}</p>}
-            </div>
-            <button
-              type="button"
-              onClick={useGps}
-              disabled={locating}
-              aria-label="Use GPS location"
-              title="Use GPS location"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-line)] text-[color:var(--color-fg-muted)] transition-colors hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] disabled:opacity-50"
-            >
-              {locating ? (
-                <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Navigation size={16} aria-hidden="true" />
-              )}
-            </button>
-          </div>
 
-          {/* District picker fallback */}
-          {gpsDenied && (
-            <div className="mt-3 rounded-xl border border-[color:var(--color-line-soft)] bg-[color:var(--color-bg-elev-2)] p-3 space-y-2">
-              <p className="text-xs text-[color:var(--color-fg-muted)]">
-                GPS unavailable — pick your state and district instead:
-              </p>
-              <div className="flex flex-wrap gap-2">
+          {locationSet ? (
+            /* Confirmed state */
+            <div className="flex items-center justify-between rounded-xl border border-[color:var(--color-accent)] bg-[color:var(--color-accent-soft)] px-4 py-3">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle size={16} className="shrink-0 text-[color:var(--color-accent)]" aria-hidden="true" />
+                <span className="text-sm font-medium text-[color:var(--color-fg)]">
+                  {form.locationLabel}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setForm((p) => ({ ...p, lat: "", lon: "", locationLabel: "" })); setShowManual(false); setSelectedState(""); }}
+                className="text-xs text-[color:var(--color-fg-muted)] underline underline-offset-2 hover:text-[color:var(--color-fg)]"
+              >
+                Change
+              </button>
+            </div>
+          ) : (
+            /* Unset state */
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={requestGps}
+                disabled={locating}
+                className="flex w-full min-h-[52px] items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-[color:var(--color-accent)] bg-[color:var(--color-accent-soft)] text-sm font-semibold text-[color:var(--color-accent)] transition-colors hover:bg-[color:var(--color-accent)]/20 disabled:opacity-60"
+              >
+                {locating ? (
+                  <><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Detecting location…</>
+                ) : (
+                  <><Navigation size={16} aria-hidden="true" /> Use my current location</>
+                )}
+              </button>
+
+              <div className="relative flex items-center gap-3">
+                <div className="h-px flex-1 bg-[color:var(--color-line-soft)]" />
+                <span className="text-[11px] text-[color:var(--color-fg-dim)]">or pick manually</span>
+                <div className="h-px flex-1 bg-[color:var(--color-line-soft)]" />
+              </div>
+
+              {/* State + district picker — always visible as fallback */}
+              <div className="flex gap-2">
                 <select
                   value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
-                  className={inputCls(false) + " flex-1 min-w-[140px]"}
+                  onChange={(e) => { setSelectedState(e.target.value); }}
+                  className={inputCls(false) + " flex-1"}
                   aria-label="Select state"
                 >
                   <option value="">Select state…</option>
                   {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
+
                 {loadingDistricts && (
                   <Loader2 size={16} className="animate-spin self-center text-[color:var(--color-fg-dim)]" aria-hidden="true" />
                 )}
+
                 {districts.length > 0 && (
                   <select
                     defaultValue=""
@@ -294,24 +277,25 @@ export function RecommendForm() {
                       const d = districts.find((x) => x.district === e.target.value);
                       if (d) pickDistrict(d);
                     }}
-                    className={inputCls(false) + " flex-1 min-w-[140px]"}
+                    className={inputCls(false) + " flex-1"}
                     aria-label="Select district"
                   >
                     <option value="">Select district…</option>
-                    {districts.map((d) => <option key={d.district} value={d.district}>{d.district}</option>)}
+                    {districts.map((d) => (
+                      <option key={d.district} value={d.district}>{d.district}</option>
+                    ))}
                   </select>
                 )}
               </div>
-              {form.lat && form.lon && (
-                <p className="text-[11px] text-[color:var(--color-accent)]">
-                  Location set: {parseFloat(form.lat).toFixed(3)}, {parseFloat(form.lon).toFixed(3)}
-                </p>
-              )}
             </div>
+          )}
+
+          {errors.lat && (
+            <p className="mt-2 text-[11px] text-[color:var(--color-danger)]">{errors.lat}</p>
           )}
         </fieldset>
 
-        {/* Quantity + diesel */}
+        {/* ── Quantity + diesel ─────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1.5 block text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
@@ -350,7 +334,7 @@ export function RecommendForm() {
           </div>
         </div>
 
-        {/* Vehicle */}
+        {/* ── Vehicle ───────────────────────────────────────────── */}
         <div>
           <label className="mb-2 block text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
             Vehicle
@@ -368,13 +352,7 @@ export function RecommendForm() {
                     : "border-[color:var(--color-line)] hover:border-[color:var(--color-fg-dim)]",
                 ].join(" ")}
               >
-                <span
-                  className={
-                    form.vehicle === v.key
-                      ? "font-medium text-[color:var(--color-accent)]"
-                      : "text-[color:var(--color-fg)]"
-                  }
-                >
+                <span className={form.vehicle === v.key ? "font-medium text-[color:var(--color-accent)]" : "text-[color:var(--color-fg)]"}>
                   {v.label}
                 </span>
                 <span className="text-[11px] text-[color:var(--color-fg-dim)]">{v.caption}</span>
@@ -383,11 +361,11 @@ export function RecommendForm() {
           </div>
         </div>
 
-        {/* Submit */}
+        {/* ── Submit ────────────────────────────────────────────── */}
         <button
           type="submit"
           disabled={pending}
-          className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full bg-[color:var(--color-accent)] border border-[color:var(--color-accent)] px-6 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-colors hover:bg-[color:var(--color-accent-mid)] hover:border-[color:var(--color-accent-mid)] disabled:opacity-60"
+          className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full border border-[color:var(--color-accent)] bg-[color:var(--color-accent)] px-6 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-colors hover:border-[color:var(--color-accent-mid)] hover:bg-[color:var(--color-accent-mid)] disabled:opacity-60"
         >
           {pending ? (
             <><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Finding mandis…</>
@@ -399,20 +377,15 @@ export function RecommendForm() {
 
       {/* ── API error ─────────────────────────────────────────────── */}
       {apiError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-[color:var(--color-danger-soft)] bg-[color:var(--color-danger-soft)] px-4 py-3 text-sm text-[color:var(--color-danger)]"
-        >
+        <div role="alert" className="rounded-xl border border-[color:var(--color-danger-soft)] bg-[color:var(--color-danger-soft)] px-4 py-3 text-sm text-[color:var(--color-danger)]">
           {apiError}
         </div>
       )}
 
-      {/* ── Loading skeleton ──────────────────────────────────────── */}
+      {/* ── Loading skeletons ─────────────────────────────────────── */}
       {pending && !result && (
         <div className="space-y-3" aria-label="Loading recommendations">
-          <LoadingCard />
-          <LoadingCard />
-          <LoadingCard />
+          <LoadingCard /><LoadingCard /><LoadingCard />
         </div>
       )}
 
@@ -439,7 +412,7 @@ export function RecommendForm() {
 
           {showSavings && nearest && top && (
             <div className="rounded-2xl border border-[color:var(--color-accent-soft)] bg-[color:var(--color-accent-soft)] px-5 py-4">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-accent)] mb-1">
+              <div className="mb-1 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-accent)]">
                 Savings vs nearest mandi
               </div>
               <p className="text-sm leading-relaxed text-[color:var(--color-fg)]">
@@ -460,27 +433,20 @@ export function RecommendForm() {
 
           {result.ranked.length === 0 ? (
             <p className="rounded-xl border border-[color:var(--color-line-soft)] px-5 py-8 text-center text-sm text-[color:var(--color-fg-muted)]">
-              No {result.commodity.toLowerCase()} prices reported near this location in the last 3 days — try expanding
-              the radius or check the{" "}
-              <a href="/mandis" className="underline hover:text-[color:var(--color-fg)]">
-                Prices page
-              </a>{" "}
+              No {result.commodity.toLowerCase()} prices reported near this location in the last 3 days — try a different district or check the{" "}
+              <a href="/mandis" className="underline hover:text-[color:var(--color-fg)]">Prices page</a>{" "}
               for your state.
             </p>
           ) : (
             <div className="space-y-3">
               {result.ranked.map((item, i) => (
-                <RecommendCard
-                  key={item.market_id}
-                  item={item}
-                  defaultExpanded={i === 0}
-                />
+                <RecommendCard key={item.market_id} item={item} defaultExpanded={i === 0} />
               ))}
             </div>
           )}
 
           {result.infeasible.length > 0 && (
-            <details className="group">
+            <details>
               <summary className="cursor-pointer list-none text-xs text-[color:var(--color-fg-dim)] [&::-webkit-details-marker]:hidden">
                 <span className="underline underline-offset-2 decoration-dashed">
                   {result.infeasible.length} mandi{result.infeasible.length !== 1 ? "s" : ""} ruled infeasible
@@ -491,13 +457,11 @@ export function RecommendForm() {
                 {result.infeasible.map((m) => (
                   <li
                     key={`${m.market_name}-${m.district}`}
-                    className="flex items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-xs text-[color:var(--color-fg-muted)] bg-[color:var(--color-bg-elev-2)]"
+                    className="flex items-start justify-between gap-3 rounded-lg bg-[color:var(--color-bg-elev-2)] px-3 py-2.5 text-xs text-[color:var(--color-fg-muted)]"
                   >
                     <span className="font-medium">
                       {m.market_name}
-                      <span className="ml-1.5 font-normal text-[color:var(--color-fg-dim)]">
-                        {m.district}
-                      </span>
+                      <span className="ml-1.5 font-normal text-[color:var(--color-fg-dim)]">{m.district}</span>
                     </span>
                     <span className="shrink-0 text-[color:var(--color-danger)]">{m.reason}</span>
                   </li>
@@ -509,9 +473,7 @@ export function RecommendForm() {
           {result.caveats.length > 0 && (
             <div className="rounded-xl bg-[color:var(--color-bg-elev-2)] px-4 py-3 space-y-1">
               {result.caveats.map((c, i) => (
-                <p key={i} className="text-[11px] leading-relaxed text-[color:var(--color-fg-dim)]">
-                  {c}
-                </p>
+                <p key={i} className="text-[11px] leading-relaxed text-[color:var(--color-fg-dim)]">{c}</p>
               ))}
             </div>
           )}
@@ -526,8 +488,6 @@ function inputCls(hasError: boolean): string {
     "w-full rounded-lg border bg-[color:var(--color-bg-elev)] px-3 py-2 text-sm text-[color:var(--color-fg)]",
     "placeholder:text-[color:var(--color-fg-dim)] outline-none transition-colors",
     "focus:border-[color:var(--color-accent)]",
-    hasError
-      ? "border-[color:var(--color-danger)]"
-      : "border-[color:var(--color-line)]",
+    hasError ? "border-[color:var(--color-danger)]" : "border-[color:var(--color-line)]",
   ].join(" ");
 }
