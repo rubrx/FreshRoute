@@ -3,10 +3,9 @@
 import { useState, useTransition } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 
-import { Panel } from "@/app/components/Panel";
-import { fetchCostEstimate, formatINR, type CostEstimate } from "@/app/lib/api";
+import { Panel } from "@/components/ui/Panel";
+import { fetchCostEstimate, formatINR, type CostEstimate } from "@/lib/api";
 
-// Segment colors for the stacked bar — deductions then net
 const SEG_COLORS = [
   "oklch(62% 0.17 30)",
   "oklch(68% 0.16 50)",
@@ -103,7 +102,7 @@ export function EstimatorForm({ supportedStates }: Props) {
         <form onSubmit={handleSubmit} className="space-y-5">
           <NumberField
             label="Quote at destination"
-            hint="₹ per quintal"
+            hint="₹ per quintal (100 kg)"
             value={form.quote}
             onChange={(v) => handleField("quote", v)}
           />
@@ -154,11 +153,11 @@ export function EstimatorForm({ supportedStates }: Props) {
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-accent)] px-5 py-3 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="inline-flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full border border-[color:var(--color-accent)] bg-[color:var(--color-accent)] px-5 py-3 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-colors hover:bg-[color:var(--color-accent-mid)] hover:border-[color:var(--color-accent-mid)] disabled:opacity-60"
           >
             {pending ? (
               <>
-                <Loader2 size={16} className="animate-spin" /> Calculating
+                <Loader2 size={16} className="animate-spin" /> Calculating…
               </>
             ) : (
               "Estimate net"
@@ -227,7 +226,6 @@ function ResultView({
 
   return (
     <Panel className="p-6 space-y-8">
-      {/* Net headline */}
       <div>
         <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
           Net revenue
@@ -247,7 +245,6 @@ function ResultView({
         </p>
       </div>
 
-      {/* Stacked composition bar */}
       <div>
         <div className="mb-2 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
           Revenue composition
@@ -288,7 +285,6 @@ function ResultView({
         </div>
       </div>
 
-      {/* Deduction detail */}
       <div>
         <div className="mb-3 flex items-baseline justify-between">
           <span className="text-xs uppercase tracking-wider text-[color:var(--color-fg-dim)]">
@@ -335,7 +331,6 @@ function ResultView({
         </div>
       </div>
 
-      {/* Compared to staying local */}
       {localResult && (
         <div className="rounded-xl border border-[color:var(--color-line-soft)] bg-[color:var(--color-bg-elev-2)] px-4 py-4">
           <div className="mb-3 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">

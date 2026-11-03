@@ -1,0 +1,59 @@
+/* ─── FreshRoute design tokens ─────────────────────────────────────
+   Primary:   #1B5E20  forest green  — buttons, active states
+   Accent:    #F57C00  warm orange   — highlights, badges
+   Surface:   #FAFAF7  warm white    — page background
+   Text:      #1A1A1A  near black    — body copy
+   Muted:     #5C5C5C  warm mid-gray — captions, meta
+   Border:    #E8E5E0  warm light    — dividers, card edges      */
+
+:root {
+  /* ── Explicit token names ─────────────────────────────────── */
+  --color-primary:    #1B5E20;
+  --color-accent:     #F57C00;
+  --color-surface:    #FAFAF7;
+  --color-text:       #1A1A1A;
+  --color-text-muted: #5C5C5C;
+  --color-border:     #E8E5E0;
+
+  /* ── Surfaces ─────────────────────────────────────────────── */
+  --bg:        var(--color-surface);
+  --bg-elev:   #FFFFFF;
+  --bg-elev-2: #F0EDE8;
+
+  /* ── Borders ──────────────────────────────────────────────── */
+  --line:      var(--color-border);
+  --line-soft: #EEE9E3;
+
+  /* ── Text ─────────────────────────────────────────────────── */
+  --fg:        var(--color-text);
+  --fg-muted:  var(--color-text-muted);
+  --fg-dim:    #8A8178;
+
+  /* ── Primary — forest green ───────────────────────────────── */
+  --accent:      var(--color-primary);
+  --accent-mid:  #155017;
+  --accent-ink:  #FFFFFF;
+  --accent-soft: #E8F5E9;
+
+  /* ── Warm orange ──────────────────────────────────────────── */
+  --warm:      var(--color-accent);
+  --warm-soft: #FFF3E0;
+
+  /* ── Semantic ─────────────────────────────────────────────── */
+  --success:      #2E7D32;
+  --warning:      #E65100;
+  --danger:       #C62828;
+  --success-soft: #E8F5E9;
+  --warning-soft: #FFF8E1;
+  --danger-soft:  #FFEBEE;
+
+  /* ── Typography ───────────────────────────────────────────── */
+  --font-sans: var(--font-inter), "Inter", var(--font-noto-devanagari),
+               "Noto Sans Devanagari", -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
+
+  /* ── Shadows ──────────────────────────────────────────────── */
+  --shadow-1: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 8px 24px -8px rgb(0 0 0 / 0.10);
+  --shadow-2: 0 4px 16px 0 rgb(0 0 0 / 0.08), 0 24px 48px -12px rgb(0 0 0 / 0.14);
+}

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-import { Panel } from "@/app/components/Panel";
-import { SpreadBar } from "@/app/components/SpreadBar";
-import { fetchArbitrage, formatINR, formatNumber } from "@/app/lib/api";
+import { Panel } from "@/components/ui/Panel";
+import { SpreadBar } from "@/components/features/SpreadBar";
+import { fetchArbitrage, formatINR, formatNumber } from "@/lib/api";
 
 type Search = { commodity?: string };
 
@@ -31,7 +31,7 @@ export default async function ArbitragePage({
           <p className="mt-2 max-w-xl text-xs text-[color:var(--color-fg-dim)]">
             A spread is only worth acting on if it exceeds your freight cost.
             The <span className="font-medium text-[color:var(--color-fg-muted)]">est. net spread</span> column
-            subtracts an indicative ₹4/km/tonne × 150 km (≈ ₹60/qtl) as a rough freight proxy — consult
+            subtracts an indicative ₹4/km/tonne × 150 km (≈ ₹60/quintal) as a rough freight proxy — consult
             your transporter for a real quote before acting.
           </p>
         </div>
@@ -72,7 +72,7 @@ export default async function ArbitragePage({
                   </span>
                   <div className="space-y-0.5">
                     <div className="text-xs tabular text-[color:var(--color-fg-muted)]">
-                      {formatINR(row.spread_rs_per_quintal)} / qtl gross
+                      {formatINR(row.spread_rs_per_quintal)} / quintal gross
                     </div>
                     {(() => {
                       const netSpread = row.spread_rs_per_quintal - 60;
@@ -83,7 +83,7 @@ export default async function ArbitragePage({
                             ? "text-[color:var(--color-success)]"
                             : "text-[color:var(--color-danger)]",
                         ].join(" ")}>
-                          {netSpread > 0 ? "+" : ""}{formatINR(netSpread)} / qtl net est.
+                          {netSpread > 0 ? "+" : ""}{formatINR(netSpread)} / quintal net est.
                         </div>
                       );
                     })()}

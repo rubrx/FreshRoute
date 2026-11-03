@@ -1,8 +1,7 @@
 import { EstimatorForm } from "./EstimatorForm";
-import { fetchFacets } from "@/app/lib/api";
+import { fetchFacets } from "@/lib/api";
 
 // Only these ten states have entries in data/reference/costs.csv today.
-// Filtering the UI select prevents a KeyError from the cost model.
 const COST_MODEL_STATES = [
   "Maharashtra",
   "Karnataka",
@@ -28,8 +27,8 @@ export default async function EstimatePage() {
         </h1>
         <p className="mt-3 max-w-xl text-sm text-[color:var(--color-fg-muted)]">
           Enter a destination quote and consignment details to see your net
-          after freight, APMC commission, cess, entry fee, labour, and
-          weighment — plus a side-by-side vs. selling locally.
+          after freight, APMC (market fee) commission, cess, entry fee, labour,
+          and weighment — plus a side-by-side vs. selling locally.
         </p>
       </div>
       <EstimatorForm supportedStates={supported} />

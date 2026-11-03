@@ -63,11 +63,7 @@ export function BottomNav() {
               {active && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-[color:var(--color-accent)]" />
               )}
-              <Icon
-                size={20}
-                strokeWidth={active ? 2 : 1.5}
-                aria-hidden="true"
-              />
+              <Icon size={20} strokeWidth={active ? 2 : 1.5} aria-hidden="true" />
               <span>{label}</span>
             </Link>
           );

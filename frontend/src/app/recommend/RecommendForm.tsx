@@ -2,15 +2,15 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Loader2, MapPin, Navigation, Share2 } from "lucide-react";
-import { RecommendCard } from "@/app/components/RecommendCard";
-import { LoadingCard } from "@/app/components/LoadingCard";
+import { RecommendCard } from "@/components/features/RecommendCard";
+import { LoadingCard } from "@/components/ui/LoadingCard";
 import {
   fetchGeoDistricts,
   fetchRecommend,
   formatINR,
   type DistrictRow,
   type RecommendResponse,
-} from "@/app/lib/api";
+} from "@/lib/api";
 
 const COMMODITIES = ["Tomato", "Onion", "Potato", "Banana"] as const;
 type Commodity = (typeof COMMODITIES)[number];
@@ -88,7 +88,6 @@ export function RecommendForm() {
   const [locating, setLocating] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  // District picker state
   const [gpsDenied, setGpsDenied] = useState(false);
   const [selectedState, setSelectedState] = useState("");
   const [districts, setDistricts] = useState<DistrictRow[]>([]);
@@ -259,7 +258,7 @@ export function RecommendForm() {
               disabled={locating}
               aria-label="Use GPS location"
               title="Use GPS location"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-line)] text-[color:var(--color-fg-muted)] transition-colors hover:bg-[color:var(--color-bg-elev-2)] disabled:opacity-50"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-line)] text-[color:var(--color-fg-muted)] transition-colors hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] disabled:opacity-50"
             >
               {locating ? (
                 <Loader2 size={16} className="animate-spin" aria-hidden="true" />
@@ -312,7 +311,7 @@ export function RecommendForm() {
           )}
         </fieldset>
 
-        {/* Quantity + diesel on one row */}
+        {/* Quantity + diesel */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1.5 block text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
@@ -388,7 +387,7 @@ export function RecommendForm() {
         <button
           type="submit"
           disabled={pending}
-          className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full bg-[color:var(--color-accent)] px-6 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:translate-y-0"
+          className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full bg-[color:var(--color-accent)] border border-[color:var(--color-accent)] px-6 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-colors hover:bg-[color:var(--color-accent-mid)] hover:border-[color:var(--color-accent-mid)] disabled:opacity-60"
         >
           {pending ? (
             <><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Finding mandis…</>
@@ -420,7 +419,6 @@ export function RecommendForm() {
       {/* ── Results ───────────────────────────────────────────────── */}
       {result && !pending && (
         <div className="space-y-6">
-          {/* Meta strip + share */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[color:var(--color-fg-dim)]">
               <span>{result.commodity}</span>
@@ -439,7 +437,6 @@ export function RecommendForm() {
             </button>
           </div>
 
-          {/* Savings snapshot */}
           {showSavings && nearest && top && (
             <div className="rounded-2xl border border-[color:var(--color-accent-soft)] bg-[color:var(--color-accent-soft)] px-5 py-4">
               <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-accent)] mb-1">
@@ -461,7 +458,6 @@ export function RecommendForm() {
             </div>
           )}
 
-          {/* Ranked cards */}
           {result.ranked.length === 0 ? (
             <p className="rounded-xl border border-[color:var(--color-line-soft)] px-5 py-8 text-center text-sm text-[color:var(--color-fg-muted)]">
               No {result.commodity.toLowerCase()} prices reported near this location in the last 3 days — try expanding
@@ -483,7 +479,6 @@ export function RecommendForm() {
             </div>
           )}
 
-          {/* Infeasible section */}
           {result.infeasible.length > 0 && (
             <details className="group">
               <summary className="cursor-pointer list-none text-xs text-[color:var(--color-fg-dim)] [&::-webkit-details-marker]:hidden">
@@ -511,7 +506,6 @@ export function RecommendForm() {
             </details>
           )}
 
-          {/* Caveats */}
           {result.caveats.length > 0 && (
             <div className="rounded-xl bg-[color:var(--color-bg-elev-2)] px-4 py-3 space-y-1">
               {result.caveats.map((c, i) => (

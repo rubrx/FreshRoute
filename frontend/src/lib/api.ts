@@ -1,11 +1,3 @@
-/**
- * Typed fetchers for the FreshRoute FastAPI backend.
- *
- * All requests use the App Router server-side fetch cache with
- * `revalidate: 60` so a demo click doesn't hammer the API, but data
- * refreshes minute-by-minute during the panel walkthrough.
- */
-
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 export type SummaryCard = {
@@ -79,69 +71,6 @@ export type CostEstimate = {
   net_revenue_rs: number;
   net_rs_per_tonne: number;
 };
-
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    next: { revalidate: 60 },
-    headers: { accept: "application/json" },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`${path} → ${res.status}${body ? `: ${body}` : ""}`);
-  }
-  return (await res.json()) as T;
-}
-
-export function fetchSummary(): Promise<SummaryResponse> {
-  return get<SummaryResponse>("/summary");
-}
-
-export function fetchArbitrage(params: {
-  commodity?: string;
-  limit?: number;
-  minReporters?: number;
-}): Promise<ArbitrageResponse> {
-  const qs = new URLSearchParams();
-  if (params.commodity) qs.set("commodity", params.commodity);
-  if (params.limit) qs.set("limit", String(params.limit));
-  if (params.minReporters) qs.set("min_reporters", String(params.minReporters));
-  const q = qs.toString();
-  return get<ArbitrageResponse>(`/markets/arbitrage${q ? `?${q}` : ""}`);
-}
-
-export function fetchFacets(): Promise<Facets> {
-  return get<Facets>("/markets/facets");
-}
-
-export function fetchPrices(params: {
-  commodity: string;
-  state?: string;
-  limit?: number;
-}): Promise<MandiPriceList> {
-  const qs = new URLSearchParams({ commodity: params.commodity });
-  if (params.state) qs.set("state", params.state);
-  if (params.limit) qs.set("limit", String(params.limit));
-  return get<MandiPriceList>(`/markets/prices?${qs}`);
-}
-
-export function fetchCostEstimate(params: {
-  quotePriceRsPerQuintal: number;
-  quantityTonnes: number;
-  distanceKm: number;
-  destState: string;
-  dieselPriceRsPerL: number;
-}): Promise<CostEstimate> {
-  const qs = new URLSearchParams({
-    quote_price_rs_per_quintal: String(params.quotePriceRsPerQuintal),
-    quantity_tonnes: String(params.quantityTonnes),
-    distance_km: String(params.distanceKm),
-    dest_state: params.destState,
-    diesel_price_rs_per_l: String(params.dieselPriceRsPerL),
-  });
-  return get<CostEstimate>(`/cost/estimate?${qs}`);
-}
-
-// ── Phase 5: Recommendation types ────────────────────────────────────────────
 
 export type RecommendSpoilage = {
   ambient_c: number;
@@ -256,6 +185,67 @@ export type SeasonalResponse = {
   current_week: number | null;
   weeks: SeasonalWeek[];
 };
+
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    next: { revalidate: 60 },
+    headers: { accept: "application/json" },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`${path} → ${res.status}${body ? `: ${body}` : ""}`);
+  }
+  return (await res.json()) as T;
+}
+
+export function fetchSummary(): Promise<SummaryResponse> {
+  return get<SummaryResponse>("/summary");
+}
+
+export function fetchArbitrage(params: {
+  commodity?: string;
+  limit?: number;
+  minReporters?: number;
+}): Promise<ArbitrageResponse> {
+  const qs = new URLSearchParams();
+  if (params.commodity) qs.set("commodity", params.commodity);
+  if (params.limit) qs.set("limit", String(params.limit));
+  if (params.minReporters) qs.set("min_reporters", String(params.minReporters));
+  const q = qs.toString();
+  return get<ArbitrageResponse>(`/markets/arbitrage${q ? `?${q}` : ""}`);
+}
+
+export function fetchFacets(): Promise<Facets> {
+  return get<Facets>("/markets/facets");
+}
+
+export function fetchPrices(params: {
+  commodity: string;
+  state?: string;
+  limit?: number;
+}): Promise<MandiPriceList> {
+  const qs = new URLSearchParams({ commodity: params.commodity });
+  if (params.state) qs.set("state", params.state);
+  if (params.limit) qs.set("limit", String(params.limit));
+  return get<MandiPriceList>(`/markets/prices?${qs}`);
+}
+
+export function fetchCostEstimate(params: {
+  quotePriceRsPerQuintal: number;
+  quantityTonnes: number;
+  distanceKm: number;
+  destState: string;
+  dieselPriceRsPerL: number;
+}): Promise<CostEstimate> {
+  const qs = new URLSearchParams({
+    quote_price_rs_per_quintal: String(params.quotePriceRsPerQuintal),
+    quantity_tonnes: String(params.quantityTonnes),
+    distance_km: String(params.distanceKm),
+    dest_state: params.destState,
+    diesel_price_rs_per_l: String(params.dieselPriceRsPerL),
+  });
+  return get<CostEstimate>(`/cost/estimate?${qs}`);
+}
 
 export function fetchRecommend(params: {
   originLat: number;

@@ -1,14 +1,14 @@
 import Link from "next/link";
 
-import { MandiChart } from "@/app/components/MandiChart";
-import { Panel } from "@/app/components/Panel";
+import { MandiChart } from "@/components/features/MandiChart";
+import { Panel } from "@/components/ui/Panel";
 import {
   fetchCommodityOverview,
   fetchFacets,
   fetchPrices,
   formatINR,
   type MandiPrice,
-} from "@/app/lib/api";
+} from "@/lib/api";
 
 type Search = { commodity?: string; state?: string; view?: string };
 
@@ -130,7 +130,7 @@ export default async function MandisPage({
           <SmallStat
             label="Median"
             value={formatINR(stats.median)}
-            caption={nationalMedian ? `nat. median ${formatINR(nationalMedian)}` : "₹/qtl"}
+            caption={nationalMedian ? `nat. median ${formatINR(nationalMedian)}` : "₹/quintal"}
           />
           <SmallStat
             label="High"
@@ -192,7 +192,6 @@ export default async function MandisPage({
             />
           </Panel>
 
-          {/* State ranking table */}
           {stateRankings.length > 1 && (
             <Panel className="mt-6 overflow-hidden">
               <div className="border-b border-[color:var(--color-line-soft)] px-5 py-4">
@@ -245,7 +244,6 @@ export default async function MandisPage({
             </Panel>
           )}
 
-          {/* Mobile card list */}
           <div className="mt-6 space-y-2 md:hidden">
             <div className="mb-3 text-xs text-[color:var(--color-fg-dim)]">
               All {prices.count} mandis
@@ -267,13 +265,12 @@ export default async function MandisPage({
                   <div className="tabular text-base font-medium text-[color:var(--color-fg)]">
                     {formatINR(r.modal_price_rs_per_quintal)}
                   </div>
-                  <div className="text-[10px] text-[color:var(--color-fg-dim)]">₹/qtl modal</div>
+                  <div className="text-[10px] text-[color:var(--color-fg-dim)]">₹/quintal modal</div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Desktop table */}
           <Panel className="mt-6 hidden overflow-hidden md:block">
             <div className="border-b border-[color:var(--color-line-soft)] px-5 py-4 text-sm text-[color:var(--color-fg)]">
               All {prices.count} mandis

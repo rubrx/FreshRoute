@@ -11,16 +11,15 @@ import {
   YAxis,
 } from "recharts";
 
-// Tokens duplicated as literals — Recharts sets SVG attributes at render
-// and cannot read CSS custom properties.
-const GRID  = "oklch(90% 0.003 270)";
-const AXIS  = "oklch(86% 0.004 270)";
-const TICK  = "oklch(45% 0.006 270)";
-const BAR   = "oklch(59% 0.149 163)";
-const HOVER = "oklch(95% 0.003 270 / 0.6)";
-const PANEL = "oklch(99% 0.002 270)";
-const INK   = "oklch(18% 0.006 270)";
-const MED   = "oklch(62% 0.17 30)";
+/* Recharts sets SVG attributes directly — CSS variables don't work here. */
+const GRID  = "#E8E5E0";
+const AXIS  = "#E0DDD8";
+const TICK  = "#5C5C5C";
+const BAR   = "#1B5E20";
+const HOVER = "rgba(27, 94, 32, 0.06)";
+const PANEL = "#FFFFFF";
+const INK   = "#1A1A1A";
+const MED   = "#F57C00";
 
 type Row = { market: string; district: string; modal_price: number };
 
@@ -64,13 +63,13 @@ export function MandiChart({ rows, nationalMedian }: Props) {
             cursor={{ fill: HOVER }}
             contentStyle={{
               background: PANEL,
-              border: `1px solid ${AXIS}`,
+              border: `1px solid ${GRID}`,
               borderRadius: 8,
               color: INK,
               fontSize: 12,
             }}
             formatter={(v) => [
-              `₹${Number(v).toLocaleString("en-IN")} / qtl`,
+              `₹${Number(v).toLocaleString("en-IN")} / quintal`,
               "Modal",
             ]}
             labelFormatter={(_, payload) =>

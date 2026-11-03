@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, MapPin } from "lucide-react";
 
-import type { RecommendItem } from "@/app/lib/api";
-import { formatINR, formatNumber } from "@/app/lib/api";
+import type { RecommendItem } from "@/lib/api";
+import { formatINR, formatNumber } from "@/lib/api";
 import { CostWaterfall } from "./CostWaterfall";
 import { FreshnessBar } from "./FreshnessBar";
 import { SpoilageChip } from "./SpoilageChip";
@@ -23,8 +23,7 @@ function borderColor(fraction: number): string {
 export function RecommendCard({ item, defaultExpanded = false }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
-  const spoilageLoss =
-    item.gross_revenue_rs - item.expected_saleable_revenue_rs;
+  const spoilageLoss = item.gross_revenue_rs - item.expected_saleable_revenue_rs;
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${item.market_name} APMC mandi ${item.district} ${item.state} India`
@@ -54,13 +53,10 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
               {item.district} · {item.state}
             </p>
           </div>
-          <SpoilageChip
-            fraction={item.spoilage.spoilage_fraction}
-            className="shrink-0"
-          />
+          <SpoilageChip fraction={item.spoilage.spoilage_fraction} className="shrink-0" />
         </div>
 
-        {/* Decision number */}
+        {/* Net realization */}
         <div className="mt-4">
           <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-fg-dim)]">
             Net realization
@@ -71,7 +67,6 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
               /tonne
             </span>
           </div>
-          {/* Gross → net delta */}
           <div className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
             from{" "}
             <span className="tabular font-medium text-[color:var(--color-fg)]">
@@ -79,7 +74,11 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
             </span>{" "}
             gross —{" "}
             <span className="tabular text-[color:var(--color-danger)]">
-              {formatINR(item.costs.total_deductions_rs / item.gross_revenue_rs * item.modal_price_rs_per_quintal * 10)}
+              {formatINR(
+                (item.costs.total_deductions_rs / item.gross_revenue_rs) *
+                  item.modal_price_rs_per_quintal *
+                  10
+              )}
             </span>{" "}
             lost to costs
           </div>
@@ -90,16 +89,19 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
           <div className="mt-3 flex flex-wrap gap-2">
             {item.price_pct_rank_in_state >= 75 && (
               <span className="rounded-full bg-[color:var(--color-accent-soft)] px-2.5 py-0.5 text-[11px] font-medium text-[color:var(--color-accent)]">
-                Top {Math.max(1, Math.round(100 - item.price_pct_rank_in_state) + 1)}% price in {item.state}
+                Top {Math.max(1, Math.round(100 - item.price_pct_rank_in_state) + 1)}% price in{" "}
+                {item.state}
               </span>
             )}
             {item.vs_state_median_rs_per_qtl !== 0 && (
-              <span className={[
-                "rounded-full px-2.5 py-0.5 text-[11px] font-medium tabular",
-                item.vs_state_median_rs_per_qtl >= 0
-                  ? "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]"
-                  : "bg-[color:var(--color-danger)]/10 text-[color:var(--color-danger)]",
-              ].join(" ")}>
+              <span
+                className={[
+                  "rounded-full px-2.5 py-0.5 text-[11px] font-medium tabular",
+                  item.vs_state_median_rs_per_qtl >= 0
+                    ? "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]"
+                    : "bg-[color:var(--color-danger)]/10 text-[color:var(--color-danger)]",
+                ].join(" ")}
+              >
                 {item.vs_state_median_rs_per_qtl >= 0 ? "+" : ""}
                 {formatINR(item.vs_state_median_rs_per_qtl)} vs {item.state} median
               </span>
@@ -107,7 +109,7 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
           </div>
         )}
 
-        {/* Metadata strip */}
+        {/* Meta strip */}
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[color:var(--color-fg-muted)]">
           <span>{formatNumber(item.distance_km, 0)} km</span>
           <span>·</span>
@@ -126,7 +128,6 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
           )}
         </div>
 
-        {/* Why text */}
         <p className="mt-2 text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
           {item.why}
         </p>
@@ -162,11 +163,9 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
 
             <div className="rounded-lg bg-[color:var(--color-bg-elev-2)] px-3 py-2.5">
               <p className="text-[11px] leading-relaxed text-[color:var(--color-fg-dim)]">
-                <span className="font-medium text-[color:var(--color-fg-muted)]">
-                  Data note:
-                </span>{" "}
-                Price from data.gov.in snapshot · {item.price_snapshot_date} ·
-                Freight and mandi charges are seed values, not live quotes.
+                <span className="font-medium text-[color:var(--color-fg-muted)]">Data note:</span>{" "}
+                Price from data.gov.in snapshot · {item.price_snapshot_date} · Freight and mandi
+                charges are seed values, not live quotes.
               </p>
             </div>
           </div>
@@ -176,7 +175,7 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
         <div className="mt-4 flex items-center gap-2">
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full border border-[color:var(--color-line)] px-4 text-sm font-medium text-[color:var(--color-fg)] transition-colors hover:bg-[color:var(--color-bg-elev-2)]"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full border border-[color:var(--color-line)] px-4 text-sm font-medium text-[color:var(--color-fg)] transition-colors hover:border-[color:var(--color-accent)] hover:bg-[color:var(--color-accent-soft)]"
             aria-expanded={expanded}
           >
             {expanded ? (
@@ -193,7 +192,7 @@ export function RecommendCard({ item, defaultExpanded = false }: Props) {
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full bg-[color:var(--color-accent)] px-4 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-transform hover:-translate-y-0.5"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full border border-[color:var(--color-accent)] bg-[color:var(--color-accent)] px-4 text-sm font-semibold text-[color:var(--color-accent-ink)] transition-colors hover:border-[color:var(--color-accent-mid)] hover:bg-[color:var(--color-accent-mid)]"
           >
             <MapPin size={15} aria-hidden="true" /> Directions
           </a>

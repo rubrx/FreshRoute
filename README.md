@@ -1,116 +1,76 @@
 # FreshRoute
 
-> Rank candidate mandis by expected net ₹/tonne after spoilage, freight, and commission — with a hard feasibility filter that rejects any destination the produce cannot survive.
+Spoilage-aware mandi routing for Indian agricultural traders. Ranks candidate mandis by expected net ₹/tonne after spoilage loss, freight, and market charges — rejecting any destination the produce cannot survive.
 
-Capstone project — IIIT Una, 2023–27. 100% free public data. No paid APIs.
+## What it does
 
----
+- **Recommends mandis** — filters out destinations your produce can't reach while still sellable, then ranks survivors by net ₹/tonne
+- **Shows same-day spreads** — the price gap between the cheapest and priciest mandi in each state, net of indicative freight
+- **Price intelligence** — live Agmarknet modal prices across all reporting mandis, searchable by commodity and state
+- **Cost calculator** — itemised deduction breakdown: freight, APMC commission, cess, entry fee, labour, weighment
 
-## Quick start (5 commands)
+## Quick start
 
 ```bash
-# 1. Database
-cp .env.example .env
-docker compose up -d db
+# 1. Backend (Python 3.11+)
+cd backend
+cp ../.env.example ../.env        # fill POSTGRES_URL
+pip install -e ".[dev]"
+uvicorn api.main:app --reload
 
-# 2. Backend
-cd backend && pip install -e . && cd ..
-python -m backend.cli migrate
-
-# 3. Seed data (small test run — ~5 min)
-python -m backend.cli backfill \
-    --states Maharashtra \
-    --commodities Tomato \
-    --start 2024-01-01
-
-# 4. API server
-uvicorn backend.api.main:app --reload
-# → http://127.0.0.1:8000/docs
-
-# 5. Frontend
-cd frontend && npm install && npm run dev
-# → http://localhost:3000
+# 2. Frontend (Node 20+)
+cd frontend
+npm install
+npm run dev                       # http://localhost:3000
 ```
 
-Full historical backfill (2007–present, 3 states × 4 commodities) takes several hours and is resumable.
+Requires Postgres 16 + TimescaleDB. See `docker-compose.yml` for a one-command local setup.
 
----
-
-## Architecture
-
-```
- data.gov.in  ──────────┐
- Agmarknet SDK ─────────┤──► Ingestion ──► Postgres + TimescaleDB
-                        │        │              │
-             AH-66 CSV ─┘   costs.csv ─────────┤
-        district CSVs ──────────────────────────┤
-                                                │
-                OSRM (self-hosted) ─────────────┼──► FastAPI ──► Next.js
-              Open-Meteo (free) ────────────────┘    :8000      :3000
-```
-
-The decision engine fetches price + route + weather at query time and returns a ranked list of feasible mandis — no precomputed scores.
-
----
-
-## API surface
-
-| Method | Path | Returns |
-|--------|------|---------|
-| GET | `/summary` | KPI cards for the home dashboard |
-| GET | `/markets/facets` | Distinct commodities + states |
-| GET | `/markets/arbitrage` | Ranked intra-state price spreads |
-| GET | `/markets/prices` | Per-mandi prices for one commodity |
-| GET | `/cost/estimate` | Itemized ₹ breakdown for a consignment |
-| GET | `/recommend` | Best mandis ranked by net ₹/tonne |
-| GET | `/intel/commodity-overview` | Multi-commodity widget data |
-| GET | `/intel/seasonal` | 52-week arrival-index sparkline |
-| GET | `/geo/districts` | District lat/lon for GPS-fallback picker |
-
-Full docs at `http://localhost:8000/docs` after starting the API.
-
----
-
-## Data sources
-
-| Source | What | Access |
-|--------|------|--------|
-| [Agmarknet](https://agmarknet.gov.in) | 18 yr daily prices + arrivals | `agmarknet` PyPI SDK |
-| [data.gov.in](https://data.gov.in) | Live daily price feed | HTTP REST (prices only, no arrivals) |
-| USDA AH-66 | Shelf-life tables per commodity | Transcribed to `data/reference/shelf_life.csv` |
-| OSRM (self-hosted) | Road distances + travel times | Docker, Geofabrik India extract |
-| Open-Meteo | Temperature profile along route | Free API, no key required |
-| `data/reference/costs.csv` | APMC commission + cess rates by state | Manually sourced from state APMC rules |
-
----
-
-## Repo layout
+## Project tree
 
 ```
 practicum/
 ├── backend/
-│   ├── api/            FastAPI app + routers
-│   ├── analysis/       Market intelligence (price stats, seasonal index)
-│   ├── cost/           Freight + APMC cost model
-│   ├── decision/       Spoilage-aware mandi ranker
-│   ├── ingestion/      Agmarknet client, normalize, upsert, backfill
-│   └── db/             Migrations + SQLAlchemy engine
-├── frontend/           Next.js 15 App Router dashboard
+│   ├── api/          FastAPI routes + schemas
+│   ├── ingestion/    Agmarknet → TimescaleDB pipeline
+│   ├── decision/     Net ₹/tonne ranker + feasibility filter
+│   ├── cost/         Freight, commission, cess, labour model
+│   └── freshness/    Q₁₀ decay integrator (route × weather)
+├── frontend/
+│   └── src/
+│       ├── app/      Next.js App Router pages
+│       ├── components/
+│       │   ├── features/  MandiCard, SpreadBar, RecommendCard …
+│       │   ├── layout/    Navbar, Footer
+│       │   └── ui/        Panel, KpiCard, LoadingCard
+│       ├── lib/      API client + formatters
+│       └── styles/   Design tokens (CSS custom properties)
 ├── data/
-│   ├── raw/            Agmarknet dumps (gitignored)
-│   ├── processed/      Cleaned snapshots + seasonal index (gitignored)
-│   └── reference/      Versioned CSV tables (shelf life, costs, geocodes)
-└── docs/               Proposal, tech-stack rationale, quality reports
+│   ├── raw/          Agmarknet dumps — never edited
+│   └── reference/    AH-66 shelf-life CSV, mandi geocodes, cost tables
+└── docs/             Proposal, tech-stack rationale, shelf-life notes
 ```
 
----
+## Key decisions
 
-## Team
+| Decision | Rationale |
+|---|---|
+| **Agmarknet as primary source** | 18 years of daily price + arrival volume, free via the `agmarknet` PyPI package. Arrivals predict gluts; data.gov.in has prices only. |
+| **Freshness as a hard filter, not a score** | Never surface a destination the produce can't reach alive — even if it would earn more. Q₁₀ decay + OSRM route + Open-Meteo temperature profile. |
+| **LightGBM quantile forecasting** | P10/P50/P90 bounds calibrated against 3-day rolling-origin backtests. Value is arbitrage visibility, not forecast precision. |
+| **No paid APIs** | 100% free public data — Google Maps, commercial weather, and GoKwik-style feeds are explicitly out of scope. |
 
-| Person | Role |
-|--------|------|
-| Rubrangso | Full-stack + infra (ingestion, freshness, API, dashboard) |
-| Monish | AI/ML (backtest harness, LightGBM forecasters, seasonal index) |
-| Tanishq | Management/ops (cost model, field interviews, business case) |
+## Data sources
 
-See [`PROGRESS.md`](./PROGRESS.md) for what's shipped and [`TODO.md`](./TODO.md) for what's next.
+| Source | What we use | How |
+|---|---|---|
+| [Agmarknet](https://agmarknet.gov.in) | Historical daily prices + arrival volumes | `agmarknet` PyPI package |
+| [data.gov.in](https://data.gov.in) | Live daily price feed (prices only, no arrivals) | REST API with free key |
+| [Open-Meteo](https://open-meteo.com) | Hourly temperature along route | Free REST, no key |
+| [OSRM](http://project-osrm.org) | Road distance + duration | Self-hosted on Geofabrik India extract |
+| USDA AH-66 | Shelf-life parameters (Q₁₀, base life) | Transcribed to `data/reference/shelf_life.csv` |
+
+## B.Tech IT Capstone — IIIT Una 2023–27
+
+Team: Rubrangso (full-stack + infra), Monish (AI/ML), Tanishq (management/ops).
+Full proposal and timeline in [`docs/proposal.md`](docs/proposal.md).

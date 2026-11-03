@@ -10,7 +10,10 @@ export function FreshnessBar({ spoilageFraction, slOptDays, slAtEffectiveDays }:
 
   return (
     <div>
-      <div className="flex items-center gap-1" aria-label={`${Math.round(survivingFraction * 100)}% of produce survives transit`}>
+      <div
+        className="flex items-center gap-1"
+        aria-label={`${Math.round(survivingFraction * 100)}% of produce survives transit`}
+      >
         {Array.from({ length: 10 }, (_, i) => (
           <span
             key={i}

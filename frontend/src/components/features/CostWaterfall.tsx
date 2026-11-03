@@ -1,5 +1,5 @@
-import type { RecommendCostBreakdown } from "@/app/lib/api";
-import { formatINR } from "@/app/lib/api";
+import type { RecommendCostBreakdown } from "@/lib/api";
+import { formatINR } from "@/lib/api";
 
 type Props = {
   costs: RecommendCostBreakdown;
@@ -12,13 +12,13 @@ type Row = { label: string; amount: number; accent?: boolean };
 
 export function CostWaterfall({ costs, grossRevenue, spoilageLoss, netRevenue }: Props) {
   const rows: Row[] = [
-    { label: "Fuel",            amount: costs.fuel_rs },
-    { label: "APMC commission", amount: costs.apmc_commission_rs },
-    { label: "Cess",            amount: costs.cess_rs },
-    { label: "Entry fee",       amount: costs.entry_fee_rs },
-    { label: "Labour",          amount: costs.labour_rs },
-    { label: "Weighment",       amount: costs.weighment_rs },
-    { label: "Spoilage loss",   amount: spoilageLoss, accent: true },
+    { label: "Fuel",                  amount: costs.fuel_rs },
+    { label: "APMC commission (fee)", amount: costs.apmc_commission_rs },
+    { label: "Cess",                  amount: costs.cess_rs },
+    { label: "Entry fee",             amount: costs.entry_fee_rs },
+    { label: "Labour",                amount: costs.labour_rs },
+    { label: "Weighment",             amount: costs.weighment_rs },
+    { label: "Spoilage loss",         amount: spoilageLoss, accent: true },
   ].filter((r) => r.amount > 0);
 
   return (
