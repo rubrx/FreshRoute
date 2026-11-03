@@ -64,6 +64,3 @@ practicum/
 - [`docs/shelf-life.md`](docs/shelf-life.md) — AH-66 transcription rules, Q₁₀ assignments, Indian-context caveats
 - [`docs/data-reference.md`](docs/data-reference.md) — reference CSVs: schema, sources, how to update
 
-## B.Tech IT Capstone — IIIT Una 2023–27
-
-Team: Rubrangso (full-stack + infra), Monish (AI/ML), Tanishq (management/ops).
