@@ -31,7 +31,7 @@ Copy `.env.example` → `.env` at the repo root before starting.
 ## Project layout
 
 ```
-practicum/
+FreshRoute/
 ├── backend/
 │   ├── api/          FastAPI routes + schemas
 │   ├── ingestion/    Agmarknet → TimescaleDB pipeline

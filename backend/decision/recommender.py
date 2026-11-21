@@ -165,6 +165,15 @@ def _price_status_caveat(snapshot_date: date | None) -> list[str]:
     return caveats
 
 
+def pick_nearest(ranked: list[Recommendation]) -> Recommendation | None:
+    """Closest mandi by distance among the feasible, ranked results.
+
+    This is the naive baseline ("just go to the nearest mandi") that the UI
+    compares the #1 pick against.
+    """
+    return min(ranked, key=lambda r: r.distance_km) if ranked else None
+
+
 def recommend(
     db: Session,
     origin_lat: float,
@@ -258,7 +267,12 @@ def recommend(
         gross = modal_rs_qtl * QUINTALS_PER_TONNE * quantity_tonnes
         saleable = gross * (1.0 - spoilage.spoilage_fraction)
 
-        litres, fuel_rs = fuel_line(distance, vehicle, diesel_price_rs_per_l)
+        # fuel_line() is one leg for one trip; a load bigger than the vehicle
+        # needs several trips, so fuel scales with trips just like other freight.
+        trips = trips_required(quantity_tonnes, vehicle)
+        litres_per_trip, fuel_per_trip = fuel_line(distance, vehicle, diesel_price_rs_per_l)
+        litres = round(litres_per_trip * trips, 2)
+        fuel_rs = round(fuel_per_trip * trips, 2)
         other_frt = other_freight_rs(distance, vehicle, quantity_tonnes, diesel_price_rs_per_l)
         apmc = gross * rates.apmc_commission_pct / 100.0
         cess = gross * rates.cess_pct / 100.0
@@ -304,7 +318,7 @@ def recommend(
                 distance_km=round(distance, 1),
                 distance_source=centroid.source,
                 transit_hours=hours,
-                trips=trips_required(quantity_tonnes, vehicle),
+                trips=trips,
                 modal_price_rs_per_quintal=modal_rs_qtl,
                 quantity_tonnes=quantity_tonnes,
                 gross_revenue_rs=round(gross, 2),
@@ -328,9 +342,7 @@ def recommend(
         for i, r in enumerate(ranked[:max_results])
     ]
 
-    nearest_mandi: Recommendation | None = (
-        min(ranked, key=lambda r: r.distance_km) if ranked else None
-    )
+    nearest_mandi = pick_nearest(ranked)
 
     return RecommendationResult(
         origin_lat=origin_lat,

@@ -47,8 +47,11 @@ data/osrm/
 *.log
 logs/
 
-# Project docs — local/private
-docs/
+# Generated reports (rebuilt by the CLI) and local-only prep notes.
+# Hand-written docs under docs/ ARE versioned — README links to them.
+docs/data-quality-report.md
+docs/seasonal-calendar.md
+docs/detailing.md
 
 # Local/project notes
 practicum-report.md

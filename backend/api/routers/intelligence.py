@@ -43,7 +43,13 @@ from backend.api.schemas import (
 from backend.cost.model import QUINTALS_PER_TONNE, load_state_costs
 from backend.decision.geo import estimated_road_km, resolve_centroid
 from backend.decision.spoilage import DEFAULT_AMBIENT_C, estimate_spoilage
-from backend.decision.vehicles import fuel_line, get_vehicle, other_freight_rs, transit_hours
+from backend.decision.vehicles import (
+    fuel_line,
+    get_vehicle,
+    other_freight_rs,
+    transit_hours,
+    trips_required,
+)
 
 router = APIRouter(prefix="/intel", tags=["intelligence"])
 
@@ -191,7 +197,8 @@ def net_spread(
         modal = float(row["modal_price"])
         qty_qtls = quantity_tonnes * QUINTALS_PER_TONNE
 
-        _, fuel_rs = fuel_line(distance, veh, diesel_price_rs_per_l)
+        _, fuel_per_trip = fuel_line(distance, veh, diesel_price_rs_per_l)
+        fuel_rs = fuel_per_trip * trips_required(quantity_tonnes, veh)  # fuel scales with trips
         other_frt = other_freight_rs(distance, veh, quantity_tonnes, diesel_price_rs_per_l)
         freight_per_qtl = round((fuel_rs + other_frt) / qty_qtls, 1)
 
