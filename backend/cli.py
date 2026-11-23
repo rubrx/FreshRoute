@@ -10,7 +10,8 @@ Usage:
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, datetime, timedelta
+from pathlib import Path
 
 import structlog
 import typer
@@ -60,7 +61,11 @@ def backfill(
     start: str = typer.Option("2007-01-01", help="ISO start date"),
     end: str | None = typer.Option(None, help="ISO end date (default: today)"),
 ) -> None:
-    """Backfill historical Agmarknet data for the state × commodity matrix."""
+    """Backfill historical Agmarknet data for the state × commodity matrix.
+
+    NOTE: currently broken — the Agmarknet API now requires a CAPTCHA on every
+    request. Use `ceda-fetch` + `ceda-load` for history instead.
+    """
     from backend.ingestion.backfill import backfill_matrix
 
     start_d = date.fromisoformat(start)
@@ -109,6 +114,161 @@ def pull_datagovin(
         save_raw=not no_save_raw,
     )
     for k, v in result.items():
+        typer.echo(f"{k}: {v}")
+
+
+@app.command("load-snapshots")
+def load_snapshots() -> None:
+    """Replay every saved data.gov.in snapshot in data/raw/datagovin/ into `market_daily`."""
+    from backend.ingestion.pull_datagovin import load_saved_snapshots
+
+    for k, v in load_saved_snapshots().items():
+        typer.echo(f"{k}: {v}")
+
+
+@app.command("ceda-probe")
+def ceda_probe(
+    cap_test: bool = typer.Option(False, "--cap-test", help="Also run the row-cap test (~30 extra API calls)"),
+) -> None:
+    """Find the working CEDA base URL + auth scheme and show a sample response.
+
+    Needs CEDA_API_KEY in .env. Prints no secrets. Every run spends part of your
+    rate-limited quota, so don't loop it.
+    """
+    from backend.ingestion.ceda_fetch import probe
+
+    for line in probe(cap_test=cap_test):
+        typer.echo(line)
+
+
+@app.command("ceda-scope")
+def ceda_scope() -> None:
+    """Write data/reference/ceda_scope.csv: the mandis in our live data (limits what `ceda-fetch` downloads).
+
+    Run after `pull-datagovin` / `load-snapshots`. The CSV is small and can be sent to
+    anyone running a slice of the download; they need no database.
+    """
+    from backend.ingestion.ceda_loader import write_scope
+
+    df = write_scope()
+    typer.echo(f"{len(df)} rows, {df[['state', 'district', 'market']].drop_duplicates().shape[0]} mandis")
+    typer.echo(df.groupby(["state", "commodity"])["market"].nunique().to_string())
+
+
+@app.command("ceda-explore")
+def ceda_explore(
+    commodity_id: int = typer.Option(78, help="CEDA commodity id (78 = Tomato)"),
+    state_id: int = typer.Option(29, help="CEDA state id (29 = Karnataka)"),
+    year: int = typer.Option(2022),
+) -> None:
+    """Spend 3 API calls to learn whether one request can return a whole state.
+
+    CEDA allows only 40 calls per hour per key, so this decides how the download is done.
+    """
+    from backend.ingestion.ceda_fetch import explore
+
+    for line in explore(commodity_id, state_id, year):
+        typer.echo(line)
+
+
+def _limit_stop_message(exc: Exception) -> str:
+    """Tell the user when to re-run after the hourly CEDA limit stopped the download."""
+    secs = getattr(exc, "retry_after", None)
+    if secs:
+        back = datetime.now() + timedelta(seconds=secs + 10)
+        when = f"in about {round(secs / 60)} minutes (around {back:%H:%M})"
+    else:
+        when = "in about an hour"
+    return (
+        "Hourly CEDA request limit reached, stopping. Everything downloaded so far is saved.\n"
+        f"Run the same command again {when}; it continues where it left off."
+    )
+
+
+@app.command("ceda-fetch")
+def ceda_fetch(
+    states: str = typer.Option(..., help="Comma-separated state names, e.g. Karnataka,Maharashtra,Tamil Nadu"),
+    commodities: str = typer.Option(..., help="Comma-separated commodity names, e.g. Tomato,Onion,Potato,Banana"),
+    start: str = typer.Option("2018-01-01", help="ISO start date"),
+    end: str = typer.Option("2025-12-31", help="ISO end date (CEDA data currently stops around Oct 2025)"),
+    kinds: str = typer.Option("price,quantity", help="price, quantity or both"),
+    window_days: int = typer.Option(365, help="Days per request window (budget is only 40 calls/hour; the client splits any response that looks truncated)"),
+    batch_size: int = typer.Option(0, help="Markets per request (0 = use CEDA_MARKET_BATCH, default 10)"),
+    scope_file: str = typer.Option("", help="Limit the download to the mandis listed in this CSV (from `ceda-scope`), e.g. data/reference/ceda_scope.csv"),
+    wait: bool = typer.Option(False, "--wait", help="Sleep through the hourly limit and keep going, instead of stopping"),
+) -> None:
+    """Download CEDA history into data/raw/ceda/ (resumable; newest years first).
+
+    Run `ceda-probe` first and put the base URL / auth scheme it reports in .env.
+    Re-running skips chunks that are already on disk.
+
+    When CEDA's hourly request limit (40 calls) is used up, this STOPS and tells you
+    when to run it again; progress is saved. Add --wait to sleep through the limit instead.
+    """
+    from backend.ingestion.ceda_client import CedaAuthError, CedaClient, CedaError, CedaRateLimited
+    from backend.ingestion.ceda_fetch import fetch_state_commodity, load_scope, with_backoff
+
+    client = CedaClient(wait_on_limit=wait)
+    try:
+        commodities_df = with_backoff(client.commodities)
+        geographies_df = with_backoff(client.geographies)
+    except CedaRateLimited as exc:
+        typer.echo(_limit_stop_message(exc))
+        raise typer.Exit(2)
+    start_d, end_d = date.fromisoformat(start), date.fromisoformat(end)
+    scope_df = load_scope(Path(scope_file)) if scope_file else None
+
+    for st in _split(states):
+        for cm in _split(commodities):
+            typer.echo(f"== {cm} / {st}")
+            try:
+                res = fetch_state_commodity(
+                    client, cm, st, start_d, end_d,
+                    kinds=tuple(_split(kinds)),
+                    batch_size=batch_size or None,
+                    window_days=window_days,
+                    scope=scope_df,
+                    commodities=commodities_df, geographies=geographies_df,
+                )
+            except CedaAuthError as exc:
+                typer.echo(f"Auth failed (key expired or wrong scheme?): {exc}")
+                raise typer.Exit(1)
+            except CedaRateLimited as exc:
+                typer.echo(_limit_stop_message(exc))
+                raise typer.Exit(2)
+            except CedaError as exc:
+                typer.echo(f"Skipping {cm}/{st}: {exc}")
+                continue
+            typer.echo(f"   {res}")
+
+
+@app.command("ceda-map")
+def ceda_map(
+    states: str = typer.Option(...),
+    commodities: str = typer.Option(...),
+) -> None:
+    """Match cached CEDA markets to OUR markets; writes data/processed/ceda_market_crosswalk.csv.
+
+    Our market names are never changed. Fix unmatched ones by adding rows to
+    data/reference/market_aliases.csv, then re-run.
+    """
+    from backend.ingestion.ceda_loader import CROSSWALK_PATH, run_map
+
+    cw = run_map(_split(states), _split(commodities))
+    typer.echo(cw["method"].value_counts().to_string())
+    typer.echo(f"Review file: {CROSSWALK_PATH}")
+
+
+@app.command("ceda-load")
+def ceda_load(
+    states: str = typer.Option(...),
+    commodities: str = typer.Option(...),
+    dry_run: bool = typer.Option(False, help="Map and count rows but write nothing"),
+) -> None:
+    """Load cached CEDA data into `market_daily` under our market names."""
+    from backend.ingestion.ceda_loader import run_load
+
+    for k, v in run_load(_split(states), _split(commodities), dry_run=dry_run).items():
         typer.echo(f"{k}: {v}")
 
 

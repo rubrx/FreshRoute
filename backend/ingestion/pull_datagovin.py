@@ -26,6 +26,32 @@ from backend.ingestion.upsert import upsert_panel
 log = structlog.get_logger(__name__)
 
 
+def load_saved_snapshots() -> dict[str, int]:
+    """Load every parquet in data/raw/datagovin/ into `market_daily`.
+
+    Raw snapshots are dumped on each pull; this replays them (idempotent — the
+    upsert key makes re-loading harmless). Useful to register more of the
+    mandis that report on different days before mapping CEDA history onto them.
+    """
+    from backend.ingestion.datagovin_client import RAW_DIR
+
+    totals = {"files": 0, "inserted_rows": 0}
+    for path in sorted(RAW_DIR.glob("snapshot_*.parquet")):
+        import pandas as pd
+
+        raw = pd.read_parquet(path)
+        normalized = normalize(raw)
+        if normalized.empty:
+            log.warning("saved_snapshot_empty_after_normalize", path=str(path))
+            continue
+        with session_scope() as session:
+            n = upsert_panel(session, normalized, source="datagovin")
+        totals["files"] += 1
+        totals["inserted_rows"] += n
+        log.info("saved_snapshot_loaded", path=str(path), rows=n)
+    return totals
+
+
 def pull_snapshot(
     states: list[str] | None = None,
     commodities: list[str] | None = None,

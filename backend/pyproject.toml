@@ -9,6 +9,9 @@ dependencies = [
     "pyarrow>=15.0",
     "numpy>=1.26",
 
+    # Forecasting (Phase 3): quantile gradient boosting
+    "lightgbm>=4.3",
+
     # Agmarknet SDK — primary historical data source (prices + arrivals).
     # v0.2.x exposes the `Agmarknet` client class; see agmarknet_client.py.
     "agmarknet>=0.2.2,<1.0",

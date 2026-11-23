@@ -1,0 +1,7 @@
+ceda_market_id,state,district,market,ignore,notes
+170,Maharashtra,Nashik,APMC Pimpalgaon Baswant,,"CEDA 'Pimpalgaon' = same mandi, spelling differs (3555 rows)"
+1767,Karnataka,Kolar,Mulbagal APMC,,"CEDA 'Mulabagilu' = same mandi, spelling differs (2057 rows)"
+574,Maharashtra,Nashik,APMC Chandwad,,"CEDA 'Chandvad' = same mandi, spelling differs (1565 rows)"
+516,Karnataka,Chikkaballapur,Gauribidanur APMC,,"CEDA 'Gowribidanoor' (listed under Kolar) = same mandi; district was reorganised (1173 rows)"
+10079,Maharashtra,Solapur,"Laxmi-Sopan Agriculture Produce Marketing Co Ltd, Barshi, Dist Solapur",,"CEDA 'Laxmi Sopan Agriculture Produce Marketing Co Ltd' = same company market (296 rows)"
+10121,Maharashtra,Nashik,Shivsiddha Govind Producer Company Ltd Sanchalit Khajgi Krushi Utpann Bajar Samati-Abhona-Kalwan,,"CEDA 'Shivsiddha Govind Producer Company Limited Sanchal...' = same market, name abbreviated (301 rows)"

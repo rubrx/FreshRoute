@@ -62,10 +62,12 @@ _UPSERT_SQL = text(
          :min_price, :modal_price, :max_price, :arrival_tonnes, :source)
     ON CONFLICT (date, market_id, commodity_id, variety)
     DO UPDATE SET
-        min_price      = EXCLUDED.min_price,
-        modal_price    = EXCLUDED.modal_price,
-        max_price      = EXCLUDED.max_price,
-        arrival_tonnes = EXCLUDED.arrival_tonnes,
+        -- Never replace a known value with NULL: a prices-only row (data.gov.in)
+        -- must not erase arrivals, and an arrivals-only row must not erase prices.
+        min_price      = COALESCE(EXCLUDED.min_price,      market_daily.min_price),
+        modal_price    = COALESCE(EXCLUDED.modal_price,    market_daily.modal_price),
+        max_price      = COALESCE(EXCLUDED.max_price,      market_daily.max_price),
+        arrival_tonnes = COALESCE(EXCLUDED.arrival_tonnes, market_daily.arrival_tonnes),
         source         = EXCLUDED.source,
         ingested_at    = NOW()
     """
