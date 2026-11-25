@@ -141,6 +141,70 @@ def ceda_probe(
         typer.echo(line)
 
 
+@app.command("export-panel")
+def export_panel_cmd() -> None:
+    """Dump every price in the database to data/processed/panel.parquet (input to forecasting)."""
+    from backend.forecasting.panel import PANEL_PATH, export_panel
+
+    df = export_panel()
+    typer.echo(f"{len(df):,} rows, {df['market_id'].nunique()} markets -> {PANEL_PATH}")
+    typer.echo(df.groupby(["state", "commodity"]).size().to_string())
+
+
+@app.command("forecast-backtest")
+def forecast_backtest(
+    years: str = typer.Option("2022,2023,2024,2025", help="Test years (expanding-window folds)"),
+    horizons: str = typer.Option("1,2,3", help="Forecast horizons in days"),
+    rounds: int = typer.Option(300, help="Boosting rounds per LightGBM model"),
+) -> None:
+    """Backtest the P10/P50/P90 forecaster against naive baselines; writes docs/forecast-backtest.md."""
+    from backend.forecasting.backtest import (
+        PREDICTIONS_PATH, REPORT_PATH, RESULTS_PATH, run_backtest, summarize, write_report,
+    )
+    from backend.forecasting.features import make_dataset
+    from backend.forecasting.panel import load_series
+
+    series = load_series()
+    ds, enc = make_dataset(series)
+    info = {
+        "price observations used": f"{len(series):,}",
+        "mandi-commodity series": f"{series.groupby(['market_id', 'commodity']).ngroups:,}",
+        "mandis": f"{series['market_id'].nunique():,}",
+        "states": ", ".join(sorted(series["state"].unique())),
+        "commodities": ", ".join(sorted(series["commodity"].unique())),
+        "dates": f"{series['date'].min().date()} to {series['date'].max().date()}",
+    }
+    results, preds = run_backtest(
+        ds, enc, test_years=[int(y) for y in _split(years)],
+        horizons=[int(h) for h in _split(horizons)], rounds=rounds,
+    )
+    if results.empty:
+        typer.echo("No fold had enough data; nothing to report.")
+        raise typer.Exit(1)
+    RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    results.to_csv(RESULTS_PATH, index=False)
+    preds.to_parquet(PREDICTIONS_PATH, index=False)
+    write_report(results, REPORT_PATH, info=info)
+    typer.echo(summarize(results).round(4).to_string(index=False))
+    typer.echo(f"\nReport: {REPORT_PATH}\nPredictions: {PREDICTIONS_PATH}")
+
+
+@app.command("forecast-train")
+def forecast_train(
+    horizons: str = typer.Option("1,2,3"),
+    rounds: int = typer.Option(300),
+) -> None:
+    """Train the final forecaster on all data and save it to data/models/forecaster.pkl."""
+    from backend.forecasting.features import make_dataset
+    from backend.forecasting.model import MODEL_PATH, Forecaster
+    from backend.forecasting.panel import load_series
+
+    ds, enc = make_dataset(load_series())
+    model = Forecaster.fit(ds, enc, horizons=[int(h) for h in _split(horizons)], rounds=rounds)
+    model.save()
+    typer.echo(f"Saved {MODEL_PATH} (trained on data through {model.trained_through})")
+
+
 @app.command("ceda-scope")
 def ceda_scope() -> None:
     """Write data/reference/ceda_scope.csv: the mandis in our live data (limits what `ceda-fetch` downloads).

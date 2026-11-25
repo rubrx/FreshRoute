@@ -99,17 +99,21 @@ def make_dataset(
     enc: Encoders | None = None,
     horizons: Sequence[int] = HORIZONS,
     origins_only: bool = True,
+    min_obs: int = MIN_OBS,
 ) -> tuple[pd.DataFrame, Encoders]:
     """Build the modelling table from clean series (see `panel.clean_series`).
 
     Returns ``(dataset, encoders)``. With ``origins_only`` (the default) only days on which
     a mandi reported are kept, which is what training and backtesting use.
     """
+    # Only series with enough history are modelled (live-only series have a few days).
+    sizes = series.groupby(["market_id", "commodity"])["modal"].transform("size")
+    series = series[sizes >= min_obs]
+    if series.empty:
+        raise ValueError("no series with enough observations to build a dataset")
     enc = enc or Encoders.fit(series)
     frames = []
     for (market_id, commodity), g in series.groupby(["market_id", "commodity"], sort=False):
-        if len(g) < MIN_OBS:
-            continue
         f = _group_frame(g, horizons)
         f["market_id"] = market_id
         f["commodity"] = commodity

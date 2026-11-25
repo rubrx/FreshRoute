@@ -99,6 +99,13 @@ def recommend_route(
             price_pct_rank_in_state=r.price_pct_rank_in_state,
             vs_state_median_rs_per_qtl=r.vs_state_median_rs_per_qtl,
             vs_national_median_rs_per_qtl=r.vs_national_median_rs_per_qtl,
+            expected_price_rs_per_quintal=r.expected_price_rs_per_quintal,
+            price_basis=r.price_basis,
+            forecast_horizon_days=r.forecast_horizon_days,
+            forecast_p10_rs_per_quintal=r.forecast_p10_rs_per_quintal,
+            forecast_p90_rs_per_quintal=r.forecast_p90_rs_per_quintal,
+            net_rs_per_tonne_p10=r.net_rs_per_tonne_p10,
+            net_rs_per_tonne_p90=r.net_rs_per_tonne_p90,
             costs=RecommendationCostBreakdown(
                 fuel_litres=r.costs.fuel_litres,
                 fuel_rs=r.costs.fuel_rs,
@@ -134,6 +141,8 @@ def recommend_route(
         snapshot_date=result.snapshot_date,
         considered=result.considered,
         caveats=result.caveats,
+        forecast_used=result.forecast_used,
+        forecast_model_trained_through=result.forecast_model_trained_through,
         infeasible=[
             RecommendationInfeasible(
                 market_name=i.market_name,

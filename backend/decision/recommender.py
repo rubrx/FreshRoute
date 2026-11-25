@@ -1,6 +1,8 @@
 """Ranks mandis by expected net ₹/tonne after spoilage, freight, and mandi charges.
 
-Phase 3 will swap the live quote for a P50 price forecast.
+Revenue is priced from the P50 forecast for the arrival day (1-3 days ahead, set by transit
+time) when the forecaster has enough recent history for that mandi; otherwise from today's
+quote. The forecast's P10/P90 are carried through as a net-revenue range.
 """
 
 from __future__ import annotations
@@ -8,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -27,6 +30,14 @@ from backend.decision.vehicles import (
     transit_hours,
     trips_required,
 )
+from backend.forecasting.serve import (
+    MarketForecast,
+    PriceForecaster,
+    get_forecaster,
+    horizon_days_for_hours,
+)
+
+log = structlog.get_logger(__name__)
 
 # Anything below this ₹/qtl is treated as a data-quality artefact
 # (variety mislabelling, unit typo). Same floor the arbitrage endpoint uses.
@@ -34,6 +45,30 @@ PRICE_FLOOR_RS_PER_QUINTAL = 100.0
 
 DEFAULT_RADIUS_KM = 250.0
 DEFAULT_MAX_RESULTS = 8
+
+# How far back to look when deciding which day's snapshot is the latest complete one.
+SNAPSHOT_LOOKBACK_DAYS = 14
+
+
+def price_outcome(
+    price_rs_qtl: float,
+    quantity_tonnes: float,
+    spoilage_fraction: float,
+    apmc_pct: float,
+    cess_pct: float,
+    fixed_rs: float,
+) -> tuple[float, float, float, float, float]:
+    """Revenue and net if the load sells at ``price_rs_qtl``.
+
+    Returns ``(gross, saleable, apmc, cess, net)``. APMC commission and cess are percentages
+    of gross; ``fixed_rs`` is everything that does not depend on the price (fuel, other
+    freight, entry fee, labour, weighment).
+    """
+    gross = price_rs_qtl * QUINTALS_PER_TONNE * quantity_tonnes
+    saleable = gross * (1.0 - spoilage_fraction)
+    apmc = gross * apmc_pct / 100.0
+    cess = gross * cess_pct / 100.0
+    return gross, saleable, apmc, cess, saleable - fixed_rs - apmc - cess
 
 
 @dataclass(frozen=True)
@@ -84,6 +119,16 @@ class Recommendation:
     vs_state_median_rs_per_qtl: float = 0.0
     vs_national_median_rs_per_qtl: float = 0.0
 
+    # Forecast. `modal_price_rs_per_quintal` above stays TODAY'S quote; the price that
+    # revenue is computed from is `expected_price_rs_per_quintal`.
+    expected_price_rs_per_quintal: float = 0.0
+    price_basis: str = "snapshot"             # "forecast" | "snapshot"
+    forecast_horizon_days: int | None = None
+    forecast_p10_rs_per_quintal: float | None = None
+    forecast_p90_rs_per_quintal: float | None = None
+    net_rs_per_tonne_p10: float | None = None  # net if the price lands at the forecast P10
+    net_rs_per_tonne_p90: float | None = None
+
 
 @dataclass(frozen=True)
 class InfeasibleCandidate:
@@ -113,10 +158,56 @@ class RecommendationResult:
 
     caveats: list[str]
 
+    forecast_used: bool = False           # at least one ranked mandi is priced from a forecast
+    forecast_model_trained_through: str | None = None
+
+
+def choose_snapshot(counts: list[tuple[date, int]], min_completeness: float = 0.5) -> date | None:
+    """Latest day whose snapshot looks complete, from ``(date, mandis_reporting)`` pairs.
+
+    The daily feed fills during the day, so a pull made early leaves a thin partial snapshot
+    (e.g. 93 rows when a normal day has 16,000). Ranking a handful of mandis as if they were
+    the whole market would be wrong, so a day only counts if at least ``min_completeness`` of
+    the best recent day's mandis reported.
+    """
+    if not counts:
+        return None
+    best = max(n for _, n in counts)
+    complete = [d for d, n in counts if n >= min_completeness * best]
+    return max(complete) if complete else max(d for d, _ in counts)
+
+
+def _pick_snapshot_date(db: Session, commodity: str) -> date | None:
+    rows = db.execute(
+        text(
+            """
+            SELECT md.date AS d, COUNT(DISTINCT md.market_id) AS n
+              FROM market_daily md
+              JOIN commodities c ON c.id = md.commodity_id
+             WHERE c.name = :commodity
+               AND md.modal_price IS NOT NULL
+               AND md.date >= (SELECT MAX(date) FROM market_daily) - CAST(:days AS integer)
+             GROUP BY md.date
+            """
+        ),
+        {"commodity": commodity, "days": SNAPSHOT_LOOKBACK_DAYS},
+    ).all()
+    picked = choose_snapshot([(r.d, int(r.n)) for r in rows])
+    if picked is not None:
+        return picked
+    # nothing in the recent window: fall back to the latest date this commodity has at all
+    return db.execute(
+        text(
+            "SELECT MAX(md.date) FROM market_daily md "
+            "JOIN commodities c ON c.id = md.commodity_id WHERE c.name = :commodity"
+        ),
+        {"commodity": commodity},
+    ).scalar()
+
 
 def _load_candidates(db: Session, commodity: str) -> list[dict]:
-    """Latest-day modal price for every mandi selling this commodity."""
-    latest = db.execute(text("SELECT MAX(date) FROM market_daily")).scalar()
+    """Latest complete-day modal price for every mandi selling this commodity."""
+    latest = _pick_snapshot_date(db, commodity)
     if latest is None:
         return []
 
@@ -186,6 +277,8 @@ def recommend(
     radius_km: float = DEFAULT_RADIUS_KM,
     max_results: int = DEFAULT_MAX_RESULTS,
     infeasibility_threshold: float = DEFAULT_INFEASIBILITY_THRESHOLD,
+    use_forecast: bool = True,
+    forecaster: PriceForecaster | None = None,
 ) -> RecommendationResult:
     """Main entry — see module docstring."""
     if quantity_tonnes <= 0:
@@ -199,6 +292,19 @@ def recommend(
     raw = _load_candidates(db, commodity)
 
     snapshot_date: date | None = raw[0]["snapshot_date"] if raw else None
+
+    # Forecasts for the arrival day. Any failure (no model, no history, a bug) falls back
+    # to today's quote: forecasting must never break the recommendation itself.
+    forecasts: dict[tuple[int, int], MarketForecast] = {}
+    fc_engine: PriceForecaster | None = None
+    if use_forecast and snapshot_date is not None:
+        fc_engine = forecaster or get_forecaster()
+        if fc_engine is not None:
+            try:
+                forecasts = fc_engine.forecast(db, commodity, snapshot_date)
+            except Exception:  # noqa: BLE001
+                log.exception("forecast_failed_using_snapshot_prices", commodity=commodity)
+                forecasts = {}
 
     context_map = build_market_context_map(db, commodity)
 
@@ -263,9 +369,12 @@ def recommend(
             )
             continue
 
-        modal_rs_qtl = float(row["modal_price"])
-        gross = modal_rs_qtl * QUINTALS_PER_TONNE * quantity_tonnes
-        saleable = gross * (1.0 - spoilage.spoilage_fraction)
+        modal_rs_qtl = float(row["modal_price"])      # today's quote (snapshot)
+
+        # The price we expect to realise: the forecast for the arrival day when there is
+        # one (P50, with P10/P90 as the range), otherwise today's quote.
+        fc = forecasts.get((int(row["market_id"]), horizon_days_for_hours(hours)))
+        expected_rs_qtl = fc.p50 if fc else modal_rs_qtl
 
         # fuel_line() is one leg for one trip; a load bigger than the vehicle
         # needs several trips, so fuel scales with trips just like other freight.
@@ -274,14 +383,26 @@ def recommend(
         litres = round(litres_per_trip * trips, 2)
         fuel_rs = round(fuel_per_trip * trips, 2)
         other_frt = other_freight_rs(distance, vehicle, quantity_tonnes, diesel_price_rs_per_l)
-        apmc = gross * rates.apmc_commission_pct / 100.0
-        cess = gross * rates.cess_pct / 100.0
         entry_fee = rates.entry_fee_rs_per_tonne * quantity_tonnes
         labour = rates.labour_rs_per_tonne * quantity_tonnes
         weighment = rates.weighment_rs_per_tonne * quantity_tonnes
 
-        total_ded = fuel_rs + other_frt + apmc + cess + entry_fee + labour + weighment
-        net = saleable - total_ded
+        fixed = fuel_rs + other_frt + entry_fee + labour + weighment
+        spoil = spoilage.spoilage_fraction
+        gross, saleable, apmc, cess, net = price_outcome(
+            expected_rs_qtl, quantity_tonnes, spoil,
+            rates.apmc_commission_pct, rates.cess_pct, fixed,
+        )
+        total_ded = fixed + apmc + cess
+
+        net_p10 = net_p90 = None
+        if fc:
+            net_p10 = price_outcome(
+                fc.p10, quantity_tonnes, spoil, rates.apmc_commission_pct, rates.cess_pct, fixed
+            )[-1] / quantity_tonnes
+            net_p90 = price_outcome(
+                fc.p90, quantity_tonnes, spoil, rates.apmc_commission_pct, rates.cess_pct, fixed
+            )[-1] / quantity_tonnes
 
         breakdown = CostBreakdown(
             fuel_litres=litres,
@@ -303,9 +424,15 @@ def recommend(
                 rank_label = f" Top-{int(100 - pct) + 1}% price in {row['state']}."
             elif pct >= 75:
                 rank_label = f" Upper-quartile price in {row['state']}."
+        forecast_note = ""
+        if fc:
+            forecast_note = (
+                f" Expected price ₹{fc.p50:,.0f}/qtl on arrival "
+                f"(likely range ₹{fc.p10:,.0f}–₹{fc.p90:,.0f})."
+            )
         why = (
             f"₹{net / quantity_tonnes:,.0f}/tonne net after {spoilage.spoilage_fraction*100:.0f}% "
-            f"expected spoilage and freight over {distance:.0f} km.{rank_label}"
+            f"expected spoilage and freight over {distance:.0f} km.{forecast_note}{rank_label}"
         )
 
         ranked.append(
@@ -333,6 +460,13 @@ def recommend(
                 price_pct_rank_in_state=ctx.price_pct_rank_in_state if ctx else 50.0,
                 vs_state_median_rs_per_qtl=ctx.vs_state_median_rs_per_qtl if ctx else 0.0,
                 vs_national_median_rs_per_qtl=ctx.vs_national_median_rs_per_qtl if ctx else 0.0,
+                expected_price_rs_per_quintal=round(expected_rs_qtl, 2),
+                price_basis="forecast" if fc else "snapshot",
+                forecast_horizon_days=fc.horizon_days if fc else None,
+                forecast_p10_rs_per_quintal=round(fc.p10, 2) if fc else None,
+                forecast_p90_rs_per_quintal=round(fc.p90, 2) if fc else None,
+                net_rs_per_tonne_p10=round(net_p10, 2) if net_p10 is not None else None,
+                net_rs_per_tonne_p90=round(net_p90, 2) if net_p90 is not None else None,
             )
         )
 
@@ -343,6 +477,17 @@ def recommend(
     ]
 
     nearest_mandi = pick_nearest(ranked)
+
+    forecast_used = any(r.price_basis == "forecast" for r in ranked)
+    caveats = _price_status_caveat(snapshot_date)
+    if forecast_used and fc_engine is not None:
+        caveats.insert(
+            0,
+            "Revenue uses a price forecast for the arrival day (1-3 days ahead, from transit time): "
+            f"the median, with a likely range, from a model trained on data through "
+            f"{fc_engine.trained_through}. Mandis without enough recent price history use "
+            "today's quote instead.",
+        )
 
     return RecommendationResult(
         origin_lat=origin_lat,
@@ -358,5 +503,9 @@ def recommend(
         ranked=ranked,
         nearest_mandi=nearest_mandi,
         infeasible=sorted(infeasible, key=lambda x: x.distance_km)[:max_results],
-        caveats=_price_status_caveat(snapshot_date),
+        caveats=caveats,
+        forecast_used=forecast_used,
+        forecast_model_trained_through=(
+            fc_engine.trained_through if (forecast_used and fc_engine is not None) else None
+        ),
     )

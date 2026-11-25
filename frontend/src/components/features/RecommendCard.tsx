@@ -25,6 +25,12 @@ export function RecommendCard({ item, quantityTonnes, defaultExpanded = false }:
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const spoilageLoss = item.gross_revenue_rs - item.expected_saleable_revenue_rs;
+  // Revenue is computed from the expected (forecast) price when there is one, else today's quote.
+  const priceUsed = item.expected_price_rs_per_quintal || item.modal_price_rs_per_quintal;
+  const hasForecast =
+    item.price_basis === "forecast" &&
+    item.forecast_p10_rs_per_quintal != null &&
+    item.forecast_p90_rs_per_quintal != null;
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${item.market_name} APMC mandi ${item.district} ${item.state} India`
@@ -71,14 +77,12 @@ export function RecommendCard({ item, quantityTonnes, defaultExpanded = false }:
           <div className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
             from{" "}
             <span className="tabular font-medium text-[color:var(--color-fg)]">
-              {formatINR(item.modal_price_rs_per_quintal * 10)}
+              {formatINR(priceUsed * 10)}
             </span>{" "}
             gross —{" "}
             <span className="tabular text-[color:var(--color-danger)]">
               {formatINR(
-                (item.costs.total_deductions_rs / item.gross_revenue_rs) *
-                  item.modal_price_rs_per_quintal *
-                  10
+                (item.costs.total_deductions_rs / item.gross_revenue_rs) * priceUsed * 10
               )}
             </span>{" "}
             lost to costs
@@ -92,6 +96,45 @@ export function RecommendCard({ item, quantityTonnes, defaultExpanded = false }:
             </div>
           )}
         </div>
+
+        {/* Price forecast */}
+        {hasForecast ? (
+          <div className="mt-3 rounded-lg bg-[color:var(--color-bg-elev-2)] px-3 py-2.5">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-fg-dim)]">
+              Price forecast · {item.forecast_horizon_days}{" "}
+              {item.forecast_horizon_days === 1 ? "day" : "days"} ahead
+            </div>
+            <div className="mt-1 text-sm text-[color:var(--color-fg)]">
+              Expected{" "}
+              <span className="tabular font-semibold">{formatINR(priceUsed)}</span>/qtl
+              <span className="text-[color:var(--color-fg-muted)]">
+                {" "}
+                · likely range{" "}
+                <span className="tabular">
+                  {formatINR(item.forecast_p10_rs_per_quintal as number)}–
+                  {formatINR(item.forecast_p90_rs_per_quintal as number)}
+                </span>
+              </span>
+            </div>
+            {item.net_rs_per_tonne_p10 != null && item.net_rs_per_tonne_p90 != null && (
+              <div className="mt-0.5 text-xs text-[color:var(--color-fg-muted)]">
+                Net{" "}
+                <span className="tabular">
+                  {formatINR(item.net_rs_per_tonne_p10)} to {formatINR(item.net_rs_per_tonne_p90)}
+                </span>{" "}
+                /tonne across that range
+              </div>
+            )}
+            <div className="mt-0.5 text-[11px] text-[color:var(--color-fg-dim)]">
+              Today’s quote:{" "}
+              <span className="tabular">{formatINR(item.modal_price_rs_per_quintal)}</span>/qtl
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 text-[11px] text-[color:var(--color-fg-dim)]">
+            Priced at today’s quote — not enough recent price history to forecast this mandi.
+          </div>
+        )}
 
         {/* Price context badges */}
         {(item.price_pct_rank_in_state > 0 || item.vs_state_median_rs_per_qtl !== 0) && (
@@ -173,8 +216,10 @@ export function RecommendCard({ item, quantityTonnes, defaultExpanded = false }:
             <div className="rounded-lg bg-[color:var(--color-bg-elev-2)] px-3 py-2.5">
               <p className="text-[11px] leading-relaxed text-[color:var(--color-fg-dim)]">
                 <span className="font-medium text-[color:var(--color-fg-muted)]">Data note:</span>{" "}
-                Price from data.gov.in snapshot · {item.price_snapshot_date} · Freight and mandi
-                charges are seed values, not live quotes.
+                {hasForecast
+                  ? `Expected price is a model forecast for the arrival day (starting from the ${item.price_snapshot_date} data.gov.in quote). `
+                  : `Price from data.gov.in snapshot · ${item.price_snapshot_date} · `}
+                Freight and mandi charges are seed values, not live quotes.
               </p>
             </div>
           </div>

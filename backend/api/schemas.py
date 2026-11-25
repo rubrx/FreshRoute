@@ -159,6 +159,28 @@ class RecommendationItem(BaseModel):
         description="Premium over national median (₹/qtl). Negative = below median.",
     )
 
+    # Forecast. `modal_price_rs_per_quintal` is TODAY'S quote; revenue is computed from
+    # `expected_price_rs_per_quintal` (the P50 forecast for the arrival day when available).
+    expected_price_rs_per_quintal: float = Field(
+        0.0, description="Price the revenue is computed from (₹/qtl)."
+    )
+    price_basis: str = Field(
+        "snapshot", description="'forecast' (P50 for the arrival day) or 'snapshot' (today's quote)."
+    )
+    forecast_horizon_days: int | None = None
+    forecast_p10_rs_per_quintal: float | None = Field(
+        None, description="Pessimistic price: 1 in 10 chance it lands below this (₹/qtl)."
+    )
+    forecast_p90_rs_per_quintal: float | None = Field(
+        None, description="Optimistic price: 1 in 10 chance it lands above this (₹/qtl)."
+    )
+    net_rs_per_tonne_p10: float | None = Field(
+        None, description="Net ₹/tonne if the price lands at the forecast P10."
+    )
+    net_rs_per_tonne_p90: float | None = Field(
+        None, description="Net ₹/tonne if the price lands at the forecast P90."
+    )
+
 
 class RecommendationInfeasible(BaseModel):
     market_name: str
@@ -181,6 +203,8 @@ class RecommendationResponse(BaseModel):
     snapshot_date: date | None
     considered: int
     caveats: list[str]
+    forecast_used: bool = False
+    forecast_model_trained_through: str | None = None
     infeasible: list[RecommendationInfeasible]
     ranked: list[RecommendationItem]
     nearest_mandi: RecommendationItem | None = Field(
@@ -188,6 +212,27 @@ class RecommendationResponse(BaseModel):
         description="Closest mandi by distance among ranked results. "
         "If different from ranked[0], the farmer is leaving money on the table.",
     )
+
+
+# ── Forecast ──────────────────────────────────────────────────────────────────
+
+class ForecastBacktestRow(BaseModel):
+    horizon_days: int
+    model: str
+    pinball_loss: float
+    skill_vs_naive: float = Field(description="Pinball-loss improvement over 'tomorrow = today' (+ = better).")
+    mae_rs_per_quintal: float
+    coverage_p10_p90: float = Field(description="Share of actual prices inside [P10, P90]; ideal 0.80.")
+    band_width_pct: float
+    test_rows: int
+
+
+class ForecastInfoResponse(BaseModel):
+    available: bool
+    trained_through: str | None = None
+    horizons: list[int] = []
+    backtest: list[ForecastBacktestRow] = []
+    note: str | None = None
 
 
 # ── Intelligence endpoints ────────────────────────────────────────────────────

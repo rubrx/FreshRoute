@@ -117,6 +117,15 @@ export type RecommendItem = {
   price_pct_rank_in_state: number;
   vs_state_median_rs_per_qtl: number;
   vs_national_median_rs_per_qtl: number;
+  // Forecast: `modal_price_rs_per_quintal` is today's quote; revenue is computed from
+  // `expected_price_rs_per_quintal` (the P50 forecast for the arrival day when available).
+  expected_price_rs_per_quintal: number;
+  price_basis: "forecast" | "snapshot";
+  forecast_horizon_days: number | null;
+  forecast_p10_rs_per_quintal: number | null;
+  forecast_p90_rs_per_quintal: number | null;
+  net_rs_per_tonne_p10: number | null;
+  net_rs_per_tonne_p90: number | null;
 };
 
 export type RecommendInfeasible = {
@@ -140,9 +149,30 @@ export type RecommendResponse = {
   snapshot_date: string | null;
   considered: number;
   caveats: string[];
+  forecast_used: boolean;
+  forecast_model_trained_through: string | null;
   infeasible: RecommendInfeasible[];
   ranked: RecommendItem[];
   nearest_mandi: RecommendItem | null;
+};
+
+export type ForecastBacktestRow = {
+  horizon_days: number;
+  model: string;
+  pinball_loss: number;
+  skill_vs_naive: number;
+  mae_rs_per_quintal: number;
+  coverage_p10_p90: number;
+  band_width_pct: number;
+  test_rows: number;
+};
+
+export type ForecastInfo = {
+  available: boolean;
+  trained_through: string | null;
+  horizons: number[];
+  backtest: ForecastBacktestRow[];
+  note: string | null;
 };
 
 export type CommodityOverviewItem = {
@@ -266,6 +296,10 @@ export function fetchRecommend(params: {
   });
   if (params.radiusKm) qs.set("radius_km", String(params.radiusKm));
   return get<RecommendResponse>(`/recommend?${qs}`);
+}
+
+export function fetchForecastInfo(): Promise<ForecastInfo> {
+  return get<ForecastInfo>("/forecast/info");
 }
 
 export function fetchCommodityOverview(): Promise<CommodityOverviewResponse> {
